@@ -57,6 +57,15 @@ body {
   font-size: 0.85rem;
 }
 
+.app-backlink {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.app-backlink:hover {
+  text-decoration: underline;
+}
+
 .status {
   flex: 0 0 auto;
   display: flex;

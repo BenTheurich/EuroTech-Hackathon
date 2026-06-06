@@ -4,6 +4,7 @@ import styles from './Sidebar.module.css';
 const NAV_ITEMS = [
   { to: '/', icon: '⊞', label: 'Dashboard', end: true },
   { to: '/buildings', icon: '🏢', label: 'Buildings' },
+  { to: '/live', icon: '📍', label: 'Live Map' },
   { to: '/access-points', icon: '📡', label: 'Access Points' },
   { to: '/analytics', icon: '📊', label: 'Analytics' },
   { to: '/settings', icon: '⚙', label: 'Settings' },
@@ -35,7 +36,7 @@ export default function Sidebar({ open = false, onClose }) {
         <nav className={styles.nav}>
           <div className={styles.navGroup}>
             <span className={styles.navGroupLabel}>Management</span>
-            {NAV_ITEMS.slice(0, 2).map((item) => (
+            {NAV_ITEMS.slice(0, 3).map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -53,7 +54,7 @@ export default function Sidebar({ open = false, onClose }) {
 
           <div className={styles.navGroup}>
             <span className={styles.navGroupLabel}>System</span>
-            {NAV_ITEMS.slice(2).map((item) => (
+            {NAV_ITEMS.slice(3).map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
