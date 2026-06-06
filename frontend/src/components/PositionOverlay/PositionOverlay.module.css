@@ -1,0 +1,48 @@
+/* Values are in grid units (the SVG viewBox is the KNN coordinate space). */
+.overlay {
+  pointer-events: none;
+}
+
+.raw {
+  fill: rgba(231, 76, 60, 0.25);
+  stroke: #e74c3c;
+  stroke-width: 0.04;
+}
+
+.rawDot {
+  fill: #e74c3c;
+}
+
+.filtered {
+  fill: rgba(52, 152, 219, 0.25);
+  stroke: #3498db;
+  stroke-width: 0.04;
+}
+
+.filteredDot {
+  fill: #3498db;
+}
+
+.pulse {
+  fill: none;
+  stroke: #3498db;
+  stroke-width: 0.025;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse 1.8s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+}
