@@ -4,10 +4,12 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Buildings from './pages/Buildings/Buildings';
 import FloorPlanViewer from './pages/FloorPlanViewer/FloorPlanViewer';
 import LiveMap from './pages/LiveMap/LiveMap';
+import Visit from './pages/Visit/Visit';
 
 // Two sites in one app:
 //   /        → admin dashboard (Layout shell: sidebar + header + pages)
-//   /live    → full-screen user tracking map (the friend's live KNN map)
+//   /visit   → visitor interface (QR landing: welcome → guide → live map)
+//   /live    → raw full-screen live KNN map (monitoring view)
 export default function App() {
   return (
     <BrowserRouter>
@@ -20,6 +22,7 @@ export default function App() {
           <Route path="analytics" element={<PlaceholderPage title="Analytics" />} />
           <Route path="settings" element={<PlaceholderPage title="Settings" />} />
         </Route>
+        <Route path="/visit" element={<Visit />} />
         <Route path="/live" element={<LiveMap />} />
       </Routes>
     </BrowserRouter>

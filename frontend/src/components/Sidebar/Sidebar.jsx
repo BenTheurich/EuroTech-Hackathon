@@ -4,6 +4,7 @@ import styles from './Sidebar.module.css';
 const NAV_ITEMS = [
   { to: '/', icon: '⊞', label: 'Dashboard', end: true },
   { to: '/buildings', icon: '🏢', label: 'Buildings' },
+  { to: '/visit', icon: '🚶', label: 'Visitor View' },
   { to: '/live', icon: '📍', label: 'Live Map' },
   { to: '/access-points', icon: '📡', label: 'Access Points' },
   { to: '/analytics', icon: '📊', label: 'Analytics' },

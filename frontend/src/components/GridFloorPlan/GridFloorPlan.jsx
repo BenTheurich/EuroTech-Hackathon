@@ -7,7 +7,7 @@ import { GRID, ANCHORS, allEdges } from './gridModel';
 // backend can be overlaid directly on top of whatever the admin draws.
 const PADDING = 0.6;
 
-export default function GridFloorPlan({ walls, onToggleEdge, editable = true, children }) {
+export default function GridFloorPlan({ walls, onToggleEdge = () => {}, editable = true, children }) {
   const viewBox = `${-PADDING} ${-PADDING} ${GRID.cols + PADDING * 2} ${GRID.rows + PADDING * 2}`;
   const edges = allEdges();
 
