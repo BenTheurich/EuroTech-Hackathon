@@ -49,7 +49,7 @@ cannot be the scanner. We localize laptops and demo the tech on them.
 
    `x` and `y` are the movement-constrained display target. `raw_x` and
    `raw_y` are the direct KNN prediction. `status` is `live`,
-   `low_confidence`, or `constrained`.
+   `low_confidence`, `smoothed`, or `constrained`.
 
 3. Coordinate space: `x` and `y` live in the same space the KNN is trained on.
    The frontend `FLOOR` and `ANCHORS` constants match the collected fingerprint
@@ -81,6 +81,20 @@ Prepare fingerprint data after collecting or changing `data/fingerprints.csv`:
 
 ```bash
 python backend/prepare_fingerprints.py
+```
+
+Generate the route-calibrated blended dataset:
+
+```bash
+python backend/blended_fingerprints.py
+```
+
+Run the backend with that blended dataset:
+
+```bash
+$env:WIFI_FINGERPRINT_PATH="data/fingerprints_blended.csv"
+cd backend
+python -m uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
 Feed the map with no hardware:

@@ -6,6 +6,8 @@ MIN_CONFIDENCE = 0.15
 LOW_CONFIDENCE_THRESHOLD = 0.5
 LOCAL_CANDIDATE_RADIUS_M = 2.25
 LOCAL_PRIOR_MIN_NEAREST_DISTANCE = 4.5
+JUMP_DAMPING_DISTANCE_M = 1.0
+JUMP_DAMPING_ALPHA = 0.25
 
 
 def confidence_from_distance(nearest_distance, carried_count=0):
@@ -59,6 +61,13 @@ class LocationTracker:
                 confidence = _clamp(confidence - 0.25, MIN_CONFIDENCE, 1.0)
                 status = "constrained"
 
+            damped_x, damped_y = _damp_large_jump(previous_x, previous_y, x, y)
+            if (damped_x, damped_y) != (x, y):
+                x = damped_x
+                y = damped_y
+                if status == "live":
+                    status = "smoothed"
+
         self.previous_position = (x, y)
         self.previous_time = now
 
@@ -110,6 +119,17 @@ def _scan_age_ms(scan_time, now):
 
 def _clamp(value, minimum, maximum):
     return max(minimum, min(maximum, value))
+
+
+def _damp_large_jump(previous_x, previous_y, x, y):
+    distance = math.hypot(x - previous_x, y - previous_y)
+    if distance <= JUMP_DAMPING_DISTANCE_M:
+        return x, y
+
+    return (
+        previous_x + (x - previous_x) * JUMP_DAMPING_ALPHA,
+        previous_y + (y - previous_y) * JUMP_DAMPING_ALPHA,
+    )
 
 
 def _local_candidate_prediction(candidates, previous_position, allowed_distance):

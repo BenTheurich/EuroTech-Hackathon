@@ -1,9 +1,12 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import json
+import os
 
 from knn_model import WifiKNNLocalizer
 from location_tracker import LocationTracker
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 app = FastAPI()
 
@@ -16,7 +19,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-localizer = WifiKNNLocalizer()
+def create_localizer():
+    return WifiKNNLocalizer(
+        fingerprint_path=_configured_fingerprint_path()
+    )
+
+
+def _configured_fingerprint_path():
+    fingerprint_path = os.environ.get("WIFI_FINGERPRINT_PATH")
+    if not fingerprint_path:
+        return None
+
+    if os.path.isabs(fingerprint_path):
+        return fingerprint_path
+
+    return os.path.join(PROJECT_ROOT, fingerprint_path)
+
+
+localizer = create_localizer()
 tracker = LocationTracker()
 
 
