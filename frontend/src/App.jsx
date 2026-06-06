@@ -1,5 +1,6 @@
 import './App.css'
 import { useLocationSocket } from './useLocationSocket'
+import { useSmoothedLocation } from './useSmoothedLocation'
 import MapView from './MapView'
 
 const STATUS_LABELS = {
@@ -9,7 +10,8 @@ const STATUS_LABELS = {
 }
 
 function App() {
-  const { status, position, trail } = useLocationSocket()
+  const { status, targetPosition } = useLocationSocket()
+  const { position, trail } = useSmoothedLocation(targetPosition)
 
   return (
     <div className="app">
@@ -32,6 +34,8 @@ function App() {
         {position ? (
           <span>
             Position: x = {position.x.toFixed(1)}, y = {position.y.toFixed(1)}
+            {' '}
+            confidence = {Math.round((position.confidence ?? 1) * 100)}%
           </span>
         ) : (
           <span>Waiting for the first reading from the scanner…</span>
