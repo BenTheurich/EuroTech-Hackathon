@@ -5,17 +5,17 @@ from anchor_hints import apply_anchor_hint, detect_anchor_hint
 
 def test_detects_strong_near_anchor_signal_with_candidate_context():
     prediction = {
-        "x": 6.46,
-        "y": 3.89,
-        "candidates": [{"x": 6.46, "y": 3.89, "distance": 8.44}],
+        "x": 15.0,
+        "y": 8.0,
+        "candidates": [{"x": 15.0, "y": 8.0, "distance": 8.44}],
     }
     scan = {"rssi_a": -50, "rssi_b": -49, "rssi_c": -52, "rssi_d": -30}
 
     hint = detect_anchor_hint(scan, prediction)
 
     assert hint["anchor"] == "D"
-    assert hint["x"] == pytest.approx(7.0)
-    assert hint["y"] == pytest.approx(5.0)
+    assert hint["x"] == pytest.approx(16.0)
+    assert hint["y"] == pytest.approx(9.0)
     assert hint["score"] >= 0.75
 
 

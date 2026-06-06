@@ -1,12 +1,38 @@
+import json
 import math
+from pathlib import Path
 
 
+# x/y are the corner positions in the new 17 x 10 grid (x 0..16, y 0..9).
+# The `threshold` values below are fallback defaults; if
+# data/anchor_thresholds.json exists (written by derive_anchor_thresholds.py),
+# its values override them so the hint is tuned to the real collected signals.
 ANCHORS = {
     "rssi_a": {"anchor": "A", "x": 0.0, "y": 0.0, "threshold": -40.0},
-    "rssi_b": {"anchor": "B", "x": 7.0, "y": 0.0, "threshold": -47.0},
-    "rssi_c": {"anchor": "C", "x": 0.0, "y": 5.0, "threshold": -34.0},
-    "rssi_d": {"anchor": "D", "x": 7.0, "y": 5.0, "threshold": -36.0},
+    "rssi_b": {"anchor": "B", "x": 16.0, "y": 0.0, "threshold": -47.0},
+    "rssi_c": {"anchor": "C", "x": 0.0, "y": 9.0, "threshold": -34.0},
+    "rssi_d": {"anchor": "D", "x": 16.0, "y": 9.0, "threshold": -36.0},
 }
+
+_THRESHOLDS_PATH = Path(__file__).resolve().parent.parent / "data" / "anchor_thresholds.json"
+
+
+def _load_threshold_overrides():
+    """Override built-in thresholds with derived ones, if the file exists."""
+    if not _THRESHOLDS_PATH.exists():
+        return
+
+    try:
+        overrides = json.loads(_THRESHOLDS_PATH.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return
+
+    for key, threshold in overrides.items():
+        if key in ANCHORS and isinstance(threshold, (int, float)):
+            ANCHORS[key]["threshold"] = float(threshold)
+
+
+_load_threshold_overrides()
 
 MIN_HINT_SCORE = 0.5
 HIGH_CONFIDENCE_HINT_SCORE = 0.75
