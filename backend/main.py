@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 
 from knn_model import WifiKNNLocalizer
+from location_tracker import LocationTracker
 
 app = FastAPI()
 
@@ -16,6 +17,7 @@ app.add_middleware(
 )
 
 localizer = WifiKNNLocalizer()
+tracker = LocationTracker()
 
 
 # ==========================================
@@ -51,17 +53,19 @@ async def receive_scan(data: dict):
     Expected payload: {"rssi_a": -50, "rssi_b": -60, "rssi_c": -70, "rssi_d": -65}
     """
     try:
-        predicted_location = localizer.predict_location(data)
-        x = predicted_location["x"]
-        y = predicted_location["y"]
+        predicted_location = localizer.predict_location_details(data)
+        payload_data = tracker.update(predicted_location, data)
 
         # Create the payload for the React Frontend
-        payload = json.dumps({"x": round(x, 2), "y": round(y, 2)})
+        payload = json.dumps(payload_data)
 
         # Broadcast the new coordinates to the React Dashboard
         await manager.broadcast(payload)
 
-        return {"status": "success", "predicted_location": {"x": x, "y": y}}
+        return {
+            "status": "success",
+            "predicted_location": payload_data,
+        }
 
     except Exception as e:
         return {"status": "error", "message": str(e)}

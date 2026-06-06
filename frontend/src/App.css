@@ -141,9 +141,21 @@ body {
   font-weight: 700;
 }
 
-/* Smoothly glide the dot to each new position instead of jumping */
 .map-user {
-  transition: transform 0.6s ease-out;
+  will-change: transform;
+}
+
+.map-user-confidence {
+  fill: var(--user);
+  opacity: 0.12;
+  stroke: var(--user);
+  stroke-width: 0.035;
+}
+
+.map-user-low_confidence .map-user-confidence,
+.map-user-constrained .map-user-confidence {
+  opacity: 0.18;
+  stroke: #facc15;
 }
 
 .map-user-dot {
