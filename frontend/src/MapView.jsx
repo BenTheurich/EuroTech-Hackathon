@@ -1,3 +1,5 @@
+import { confidenceRingRadius } from './locationSmoothing'
+
 // ============================================================================
 // COORDINATE CONTRACT  (the one place to edit when the KNN coordinate space
 // is finalized with whoever owns the backend model)
@@ -26,6 +28,7 @@ export default function MapView({ position, trail }) {
   } ${height + PADDING * 2}`
 
   const trailPoints = trail.map((p) => `${p.x},${p.y}`).join(' ')
+  const confidenceRadius = position ? confidenceRingRadius(position.confidence) : 0
 
   return (
     <svg className="map-svg" viewBox={viewBox} preserveAspectRatio="xMidYMid meet">
@@ -66,9 +69,13 @@ export default function MapView({ position, trail }) {
       {/* Live user position */}
       {position && (
         <g
-          className="map-user"
+          className={`map-user map-user-${position.trackerStatus || 'live'}`}
           transform={`translate(${position.x}, ${position.y})`}
         >
+          <circle
+            r={confidenceRadius}
+            className="map-user-confidence"
+          />
           <circle r={0.32} className="map-user-pulse" />
           <circle r={0.13} className="map-user-dot" />
         </g>
