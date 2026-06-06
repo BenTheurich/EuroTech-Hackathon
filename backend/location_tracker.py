@@ -4,6 +4,9 @@ import math
 
 MIN_CONFIDENCE = 0.15
 LOW_CONFIDENCE_THRESHOLD = 0.5
+AMBIGUITY_CONFIDENCE_SPREAD_START_M = 2.0
+AMBIGUITY_CONFIDENCE_SPREAD_FULL_M = 4.0
+MAX_AMBIGUITY_CONFIDENCE_PENALTY = 0.35
 LOCAL_CANDIDATE_RADIUS_M = 2.25
 LOCAL_PRIOR_MIN_NEAREST_DISTANCE = 4.5
 JUMP_DAMPING_DISTANCE_M = 1.0
@@ -14,10 +17,11 @@ ANCHOR_HINT_SPEED_MPS = 4.0
 ANCHOR_HINT_SLACK_M = 0.5
 
 
-def confidence_from_distance(nearest_distance, carried_count=0):
+def confidence_from_distance(nearest_distance, carried_count=0, ambiguity=None):
     confidence = 1 - ((float(nearest_distance) - 4) / 16)
     confidence = _clamp(confidence, MIN_CONFIDENCE, 1.0)
     confidence -= 0.15 * int(carried_count)
+    confidence -= _ambiguity_confidence_penalty(ambiguity)
     return _clamp(confidence, MIN_CONFIDENCE, 1.0)
 
 
@@ -38,7 +42,8 @@ class LocationTracker:
         raw_x = float(raw_prediction["x"])
         raw_y = float(raw_prediction["y"])
         nearest_distance = float(raw_prediction["nearest_distance"])
-        confidence = confidence_from_distance(nearest_distance, len(carried))
+        ambiguity = raw_prediction.get("ambiguity")
+        confidence = confidence_from_distance(nearest_distance, len(carried), ambiguity)
         status = "live" if confidence >= LOW_CONFIDENCE_THRESHOLD else "low_confidence"
         x = raw_x
         y = raw_y
@@ -108,7 +113,7 @@ class LocationTracker:
             "nearest_distance": round(nearest_distance, 2),
             "filtered_rssi": raw_prediction.get("filtered_rssi"),
             "anchor_hint": anchor_hint,
-            "ambiguity": raw_prediction.get("ambiguity", {"spread_m": 0.0, "ambiguous": False}),
+            "ambiguity": ambiguity or {"spread_m": 0.0, "ambiguous": False},
             "held": held,
             "scan_age_ms": _scan_age_ms(scan_time, now),
             "carried": carried,
@@ -182,6 +187,23 @@ def _scan_age_ms(scan_time, now):
 
 def _clamp(value, minimum, maximum):
     return max(minimum, min(maximum, value))
+
+
+def _ambiguity_confidence_penalty(ambiguity):
+    if not ambiguity or not ambiguity.get("ambiguous"):
+        return 0.0
+
+    try:
+        spread = float(ambiguity.get("spread_m", 0.0))
+    except (TypeError, ValueError):
+        return 0.0
+
+    if spread <= AMBIGUITY_CONFIDENCE_SPREAD_START_M:
+        return 0.0
+
+    spread_range = AMBIGUITY_CONFIDENCE_SPREAD_FULL_M - AMBIGUITY_CONFIDENCE_SPREAD_START_M
+    severity = (spread - AMBIGUITY_CONFIDENCE_SPREAD_START_M) / spread_range
+    return _clamp(severity, 0.0, 1.0) * MAX_AMBIGUITY_CONFIDENCE_PENALTY
 
 
 def _damp_large_jump(previous_x, previous_y, x, y):

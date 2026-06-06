@@ -23,6 +23,7 @@ ANCHOR_KEYS = ["rssi_a", "rssi_b", "rssi_c", "rssi_d"]
 
 DEFAULT_SCAN_INTERVAL_SECONDS = 0
 DEFAULT_SCAN_WAIT_SECONDS = 0.75
+DEFAULT_CARRY_MAX_AGE_SECONDS = 5.0
 DEFAULT_BACKEND_URL = "http://localhost:8000/api/location-data"
 REQUEST_TIMEOUT_SECONDS = 1.0
 
@@ -31,6 +32,9 @@ DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 LATEST_SCAN_PATH = os.path.join(DATA_DIR, "latest_scan.json")
 
 last_known = {
+    key: None for key in ANCHOR_KEYS
+}
+last_seen_at = {
     key: None for key in ANCHOR_KEYS
 }
 
@@ -48,6 +52,12 @@ def parse_args(argv=None):
         type=float,
         default=_env_float("RMFINDR_SCAN_INTERVAL", DEFAULT_SCAN_INTERVAL_SECONDS),
         help="Extra seconds to wait between scan loops.",
+    )
+    parser.add_argument(
+        "--carry-max-age",
+        type=float,
+        default=_env_float("RMFINDR_CARRY_MAX_AGE", DEFAULT_CARRY_MAX_AGE_SECONDS),
+        help="Maximum seconds to reuse a missing anchor RSSI value.",
     )
     parser.add_argument(
         "--backend-url",
@@ -180,20 +190,37 @@ def find_anchor_signals(networks):
     return payload, debug_info
 
 
-def apply_carry_forward(payload):
+def reset_carry_forward():
+    for anchor_key in ANCHOR_KEYS:
+        last_known[anchor_key] = None
+        last_seen_at[anchor_key] = None
+
+
+def apply_carry_forward(
+    payload,
+    now=None,
+    max_age_seconds=DEFAULT_CARRY_MAX_AGE_SECONDS,
+):
     """
     Fills any anchor missing from this scan with its last known value, and
     updates the memory with fresh readings. Returns the filled payload plus
     the set of anchor keys that had to be carried forward.
     """
+    now = time.monotonic() if now is None else float(now)
     carried = set()
 
     for anchor_key in ANCHOR_KEYS:
         if payload[anchor_key] is not None:
             last_known[anchor_key] = payload[anchor_key]
+            last_seen_at[anchor_key] = now
         elif last_known[anchor_key] is not None:
-            payload[anchor_key] = last_known[anchor_key]
-            carried.add(anchor_key)
+            age = now - last_seen_at[anchor_key]
+            if age <= max_age_seconds:
+                payload[anchor_key] = last_known[anchor_key]
+                carried.add(anchor_key)
+            else:
+                last_known[anchor_key] = None
+                last_seen_at[anchor_key] = None
 
     return payload, carried
 
@@ -327,6 +354,7 @@ def main(argv=None):
     print(
         "Config: "
         f"scan_wait={args.scan_wait}s interval={args.interval}s "
+        f"carry_max_age={args.carry_max_age}s "
         f"quiet={args.quiet} backend={args.backend_url}"
     )
 
@@ -342,7 +370,10 @@ def main(argv=None):
             networks = scan_wifi_networks(interface, args.scan_wait)
             scan_finished_at = datetime.now().isoformat(timespec="milliseconds")
             payload, debug_info = find_anchor_signals(networks)
-            payload, carried = apply_carry_forward(payload)
+            payload, carried = apply_carry_forward(
+                payload,
+                max_age_seconds=args.carry_max_age,
+            )
 
             body = build_backend_body(
                 payload,

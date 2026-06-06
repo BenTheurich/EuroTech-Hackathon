@@ -14,6 +14,25 @@ def test_carried_anchors_reduce_confidence():
     assert confidence_from_distance(8.0, carried_count=2) == pytest.approx(0.45)
 
 
+def test_ambiguous_candidate_spread_reduces_confidence():
+    tracker = LocationTracker()
+    now = datetime(2026, 6, 6, 12, 0, 0, tzinfo=timezone.utc)
+
+    payload = tracker.update(
+        {
+            "x": 1.0,
+            "y": 1.0,
+            "nearest_distance": 4.0,
+            "ambiguity": {"spread_m": 4.0, "ambiguous": True},
+        },
+        {"timestamp": now.isoformat()},
+        now=now,
+    )
+
+    assert payload["confidence"] == pytest.approx(0.65)
+    assert payload["status"] == "live"
+
+
 def test_tracker_accepts_normal_walking_movement():
     tracker = LocationTracker(max_speed_mps=2.5, slack_m=0.35)
     first_time = datetime(2026, 6, 6, 12, 0, 0, tzinfo=timezone.utc)
