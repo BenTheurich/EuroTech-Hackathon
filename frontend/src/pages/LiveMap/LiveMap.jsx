@@ -20,7 +20,7 @@ export default function LiveMap() {
     <div className="app">
       <header className="app-header">
         <div>
-          <h1>Indoor Positioning</h1>
+          <h1>RmFindr</h1>
           <p className="subtitle">
             <Link to="/" className="app-backlink">← Admin dashboard</Link>
             {' · '}Live Wi-Fi fingerprint tracking

@@ -48,7 +48,7 @@ export default function Visit() {
         <div className={styles.brand}>
           <span className={styles.brandIcon}>◈</span>
           <div>
-            <div className={styles.brandName}>NavCity</div>
+            <div className={styles.brandName}>RmFindr</div>
             <div className={styles.brandSub}>{VENUE.name} · {VENUE.floorLabel}</div>
           </div>
         </div>

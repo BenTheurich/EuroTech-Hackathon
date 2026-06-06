@@ -12,7 +12,7 @@ const PAGE_TITLES = {
 export default function Header({ onMenuClick }) {
   const { pathname } = useLocation();
   const base = '/' + pathname.split('/')[1];
-  const title = PAGE_TITLES[base] ?? 'NavCity';
+  const title = PAGE_TITLES[base] ?? 'RmFindr';
 
   return (
     <header className={styles.header}>

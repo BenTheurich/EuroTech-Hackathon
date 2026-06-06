@@ -25,7 +25,7 @@ export default function Sidebar({ open = false, onClose }) {
         <div className={styles.brand}>
           <span className={styles.brandIcon}>◈</span>
           <div className={styles.brandText}>
-            <div className={styles.brandName}>NavCity</div>
+            <div className={styles.brandName}>RmFindr</div>
             <div className={styles.brandSub}>Indoor Navigation</div>
           </div>
           {/* Close button — only visible in drawer mode (mobile/tablet). */}
