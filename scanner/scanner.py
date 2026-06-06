@@ -1,6 +1,7 @@
-import time
+import argparse
 import json
 import os
+import time
 from datetime import datetime
 
 import pywifi
@@ -20,26 +21,67 @@ ANCHOR_SSIDS = {
 
 ANCHOR_KEYS = ["rssi_a", "rssi_b", "rssi_c", "rssi_d"]
 
-SCAN_INTERVAL_SECONDS = 1
-SCAN_WAIT_SECONDS = 1
-
-# Where the backend is listening. Change this if the backend runs on
-# another laptop (use that laptop's LAN IP, e.g. http://192.168.1.50:8000/...).
-BACKEND_URL = "http://localhost:8000/api/location-data"
-
-# Set to False to scan only (no networking) while debugging Wi-Fi.
-SEND_TO_BACKEND = True
+DEFAULT_SCAN_INTERVAL_SECONDS = 0
+DEFAULT_SCAN_WAIT_SECONDS = 0.75
+DEFAULT_BACKEND_URL = "http://localhost:8000/api/location-data"
+REQUEST_TIMEOUT_SECONDS = 1.0
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 LATEST_SCAN_PATH = os.path.join(DATA_DIR, "latest_scan.json")
 
-# Remembers the last good reading for each anchor. If a hotspot drops out
-# of a single scan, we reuse its previous value instead of sending None
-# (which would crash the KNN) or freezing the dot.
 last_known = {
     key: None for key in ANCHOR_KEYS
 }
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Live Wi-Fi anchor scanner.")
+    parser.add_argument(
+        "--scan-wait",
+        type=float,
+        default=_env_float("RMFINDR_SCAN_WAIT", DEFAULT_SCAN_WAIT_SECONDS),
+        help="Seconds to wait after triggering a Wi-Fi scan before reading results.",
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=_env_float("RMFINDR_SCAN_INTERVAL", DEFAULT_SCAN_INTERVAL_SECONDS),
+        help="Extra seconds to wait between scan loops.",
+    )
+    parser.add_argument(
+        "--backend-url",
+        default=os.getenv("RMFINDR_BACKEND_URL", DEFAULT_BACKEND_URL),
+        help="Backend /api/location-data URL.",
+    )
+    parser.add_argument(
+        "--quiet",
+        dest="quiet",
+        action="store_true",
+        default=_env_bool("RMFINDR_QUIET", True),
+        help="Print compact one-line scan status.",
+    )
+    parser.add_argument(
+        "--verbose",
+        dest="quiet",
+        action="store_false",
+        help="Print detailed network/anchor scan status.",
+    )
+    parser.add_argument(
+        "--no-write-latest",
+        dest="write_latest",
+        action="store_false",
+        default=True,
+        help="Skip writing data/latest_scan.json each loop.",
+    )
+    parser.add_argument(
+        "--no-send",
+        dest="send_to_backend",
+        action="store_false",
+        default=True,
+        help="Scan only; do not POST to the backend.",
+    )
+    return parser.parse_args(argv)
 
 
 def ensure_data_folder_exists():
@@ -74,12 +116,12 @@ def signal_to_dbm(signal):
     return int((signal / 2) - 100)
 
 
-def scan_wifi_networks(interface):
+def scan_wifi_networks(interface, scan_wait_seconds=DEFAULT_SCAN_WAIT_SECONDS):
     """
     Triggers a real Wi-Fi scan using the Windows WLAN API through pywifi.
     """
     interface.scan()
-    time.sleep(SCAN_WAIT_SECONDS)
+    time.sleep(scan_wait_seconds)
 
     results = interface.scan_results()
 
@@ -95,7 +137,7 @@ def scan_wifi_networks(interface):
             "ssid": ssid,
             "bssid": bssid,
             "signal_raw": signal_raw,
-            "approximate_dbm": approximate_dbm
+            "approximate_dbm": approximate_dbm,
         })
 
     return networks
@@ -142,7 +184,7 @@ def apply_carry_forward(payload):
     """
     Fills any anchor missing from this scan with its last known value, and
     updates the memory with fresh readings. Returns the filled payload plus
-    the set of anchor keys that had to be carried forward (for display).
+    the set of anchor keys that had to be carried forward.
     """
     carried = set()
 
@@ -156,6 +198,28 @@ def apply_carry_forward(payload):
     return payload, carried
 
 
+def build_backend_body(
+    payload,
+    carried,
+    scan_id,
+    scan_started_at,
+    scan_finished_at,
+    scan_wait_seconds,
+    network_count,
+):
+    body = {
+        "timestamp": payload.get("timestamp"),
+        **{key: payload[key] for key in ANCHOR_KEYS},
+        "carried": sorted(carried),
+        "scan_id": scan_id,
+        "scan_started_at": scan_started_at,
+        "scan_finished_at": scan_finished_at,
+        "scan_wait_seconds": scan_wait_seconds,
+        "network_count": network_count,
+    }
+    return body
+
+
 def save_latest_scan(payload):
     ensure_data_folder_exists()
 
@@ -163,40 +227,52 @@ def save_latest_scan(payload):
         json.dump(payload, file, indent=2)
 
 
-def send_to_backend(payload):
+def send_to_backend(session, body, backend_url, quiet):
     """
     POSTs the RSSI scan to the backend, which runs the
     KNN model and broadcasts the predicted (x, y) to the frontend map.
     Skips sending if any anchor is still unknown (KNN needs all four).
     """
-    if not SEND_TO_BACKEND:
-        return
-
-    if any(payload[key] is None for key in ANCHOR_KEYS):
-        print("Skipping backend send: not all 4 anchors seen yet.")
-        return
-
-    body = {
-        key: payload[key]
-        for key in ANCHOR_KEYS
-    }
+    if any(body[key] is None for key in ANCHOR_KEYS):
+        if quiet:
+            print("skip missing anchors")
+        else:
+            print("Skipping backend send: not all 4 anchors seen yet.")
+        return None
 
     try:
-        response = requests.post(BACKEND_URL, json=body, timeout=2)
+        response = session.post(backend_url, json=body, timeout=REQUEST_TIMEOUT_SECONDS)
 
         if response.status_code == 200:
-            location = response.json().get("predicted_location")
-            print(f"Backend predicted location: {location}")
-        else:
-            print(f"Backend returned status {response.status_code}: {response.text}")
+            return response.json().get("predicted_location")
+
+        print(f"Backend returned status {response.status_code}: {response.text}")
+        return None
 
     except requests.exceptions.ConnectionError:
-        print(f"Could not reach backend at {BACKEND_URL}. Is it running?")
+        print(f"Could not reach backend at {backend_url}. Is it running?")
     except requests.exceptions.Timeout:
         print("Backend request timed out.")
 
+    return None
 
-def print_status(payload, debug_info, carried):
+
+def print_compact_status(scan_id, body, carried, location, loop_seconds):
+    anchors = " ".join(
+        f"{key[-1].upper()}={body[key]}{'*' if key in carried else ''}"
+        for key in ANCHOR_KEYS
+    )
+    position = "no prediction"
+    if location:
+        position = (
+            f"x={location.get('x')} y={location.get('y')} "
+            f"conf={location.get('confidence')} {location.get('status')}"
+        )
+
+    print(f"#{scan_id} {loop_seconds:.2f}s {anchors} -> {position}")
+
+
+def print_verbose_status(payload, debug_info, carried, scan_wait_seconds, loop_seconds):
     print("=" * 80)
     print("Anchor scan result:\n")
 
@@ -216,28 +292,60 @@ def print_status(payload, debug_info, carried):
         else:
             print(f"{anchor_key}: NOT FOUND | expected SSIDs: {ANCHOR_SSIDS[anchor_key]}")
 
-    print("\nPayload written to data/latest_scan.json:")
+    print("\nPayload:")
     print(payload)
-    print(f"\nWaiting {SCAN_INTERVAL_SECONDS} seconds...\n")
+    print(f"\nScan wait {scan_wait_seconds}s, loop took {loop_seconds:.2f}s.\n")
 
 
-def main():
+def main(argv=None):
+    args = parse_args(argv)
     print("Starting auto-refresh Wi-Fi anchor scanner.")
     print("Press CTRL + C to stop.\n")
+    print(
+        "Config: "
+        f"scan_wait={args.scan_wait}s interval={args.interval}s "
+        f"quiet={args.quiet} backend={args.backend_url}"
+    )
 
     interface = get_wifi_interface()
+    session = requests.Session()
+    scan_id = 0
 
     while True:
         try:
-            networks = scan_wifi_networks(interface)
+            scan_id += 1
+            loop_started = time.perf_counter()
+            scan_started_at = datetime.now().isoformat(timespec="milliseconds")
+            networks = scan_wifi_networks(interface, args.scan_wait)
+            scan_finished_at = datetime.now().isoformat(timespec="milliseconds")
             payload, debug_info = find_anchor_signals(networks)
             payload, carried = apply_carry_forward(payload)
 
-            save_latest_scan(payload)
-            send_to_backend(payload)
-            print_status(payload, debug_info, carried)
+            body = build_backend_body(
+                payload,
+                carried,
+                scan_id,
+                scan_started_at,
+                scan_finished_at,
+                args.scan_wait,
+                len(networks),
+            )
 
-            time.sleep(SCAN_INTERVAL_SECONDS)
+            if args.write_latest:
+                save_latest_scan(body)
+
+            location = None
+            if args.send_to_backend:
+                location = send_to_backend(session, body, args.backend_url, args.quiet)
+
+            loop_seconds = time.perf_counter() - loop_started
+            if args.quiet:
+                print_compact_status(scan_id, body, carried, location, loop_seconds)
+            else:
+                print_verbose_status(payload, debug_info, carried, args.scan_wait, loop_seconds)
+
+            if args.interval > 0:
+                time.sleep(args.interval)
 
         except KeyboardInterrupt:
             print("\nScanner stopped by user.")
@@ -248,6 +356,25 @@ def main():
             print(error)
             print("Retrying in 5 seconds...\n")
             time.sleep(5)
+
+
+def _env_float(name, default):
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    try:
+        return float(value)
+    except ValueError:
+        return default
+
+
+def _env_bool(name, default):
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    return value.strip().lower() not in {"0", "false", "no", "off"}
 
 
 if __name__ == "__main__":
