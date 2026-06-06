@@ -1,5 +1,6 @@
 import csv
 from pathlib import Path
+from statistics import mean
 
 import numpy as np
 from sklearn.neighbors import KNeighborsRegressor
@@ -7,10 +8,18 @@ from sklearn.neighbors import KNeighborsRegressor
 
 FEATURE_COLUMNS = ("rssi_a", "rssi_b", "rssi_c", "rssi_d")
 TARGET_COLUMNS = ("x", "y")
+MAX_CANDIDATES = 12
 
 
 class WifiKNNLocalizer:
-    def __init__(self, fingerprint_path=None, fallback_path=None, data_dir=None, n_neighbors=3):
+    def __init__(
+        self,
+        fingerprint_path=None,
+        fallback_path=None,
+        data_dir=None,
+        n_neighbors=8,
+        aggregate_by_point=True,
+    ):
         if n_neighbors < 1:
             raise ValueError("n_neighbors must be at least 1.")
 
@@ -29,8 +38,13 @@ class WifiKNNLocalizer:
         if not features:
             raise ValueError(f"No complete fingerprint rows found in {self.training_source}.")
 
+        self.raw_training_count = len(features)
+        if aggregate_by_point:
+            features, targets = self._aggregate_by_point(features, targets)
+
         self.training_count = len(features)
         effective_neighbors = min(self.n_neighbors, self.training_count)
+        self.targets_array = np.array(targets, dtype=float)
 
         self.model = KNeighborsRegressor(
             n_neighbors=effective_neighbors,
@@ -38,16 +52,38 @@ class WifiKNNLocalizer:
         )
         self.model.fit(
             np.array(features, dtype=float),
-            np.array(targets, dtype=float),
+            self.targets_array,
         )
 
     def predict_location(self, scan):
+        prediction = self.predict_location_details(scan)
+
+        return {
+            "x": prediction["x"],
+            "y": prediction["y"],
+        }
+
+    def predict_location_details(self, scan):
         feature_vector = self._scan_to_features(scan)
-        prediction = self.model.predict(np.array([feature_vector], dtype=float))[0]
+        features = np.array([feature_vector], dtype=float)
+        prediction = self.model.predict(features)[0]
+        candidate_count = min(MAX_CANDIDATES, self.training_count)
+        distances, indices = self.model.kneighbors(features, n_neighbors=candidate_count)
+        nearest_distance = float(distances[0][0])
+        candidates = [
+            {
+                "x": float(self.targets_array[index][0]),
+                "y": float(self.targets_array[index][1]),
+                "distance": float(distance),
+            }
+            for distance, index in zip(distances[0], indices[0])
+        ]
 
         return {
             "x": float(prediction[0]),
             "y": float(prediction[1]),
+            "nearest_distance": nearest_distance,
+            "candidates": candidates,
         }
 
     def _choose_training_source(self):
@@ -89,6 +125,27 @@ class WifiKNNLocalizer:
                 targets.append(target_row)
 
         return features, targets
+
+    @staticmethod
+    def _aggregate_by_point(features, targets):
+        grouped = {}
+
+        for feature_row, target_row in zip(features, targets):
+            point = tuple(target_row)
+            grouped.setdefault(point, []).append(feature_row)
+
+        aggregated_features = []
+        aggregated_targets = []
+
+        for point in sorted(grouped):
+            rows = grouped[point]
+            aggregated_features.append([
+                mean(column_values)
+                for column_values in zip(*rows)
+            ])
+            aggregated_targets.append(list(point))
+
+        return aggregated_features, aggregated_targets
 
     def _scan_to_features(self, scan):
         values = []
