@@ -9,6 +9,8 @@ from sklearn.neighbors import KNeighborsRegressor
 FEATURE_COLUMNS = ("rssi_a", "rssi_b", "rssi_c", "rssi_d")
 TARGET_COLUMNS = ("x", "y")
 MAX_CANDIDATES = 12
+AMBIGUITY_DISTANCE_DELTA = 2.0
+AMBIGUITY_SPREAD_THRESHOLD_M = 2.0
 
 
 class WifiKNNLocalizer:
@@ -17,7 +19,7 @@ class WifiKNNLocalizer:
         fingerprint_path=None,
         fallback_path=None,
         data_dir=None,
-        n_neighbors=8,
+        n_neighbors=3,
         aggregate_by_point=True,
     ):
         if n_neighbors < 1:
@@ -82,8 +84,11 @@ class WifiKNNLocalizer:
         return {
             "x": float(prediction[0]),
             "y": float(prediction[1]),
+            "knn_x": float(prediction[0]),
+            "knn_y": float(prediction[1]),
             "nearest_distance": nearest_distance,
             "candidates": candidates,
+            "ambiguity": _candidate_ambiguity(candidates, nearest_distance),
         }
 
     def _choose_training_source(self):
@@ -174,3 +179,33 @@ class WifiKNNLocalizer:
             return float(text)
         except ValueError:
             return None
+
+
+def _candidate_ambiguity(candidates, nearest_distance):
+    close_candidates = [
+        candidate
+        for candidate in candidates
+        if float(candidate["distance"]) <= nearest_distance + AMBIGUITY_DISTANCE_DELTA
+    ]
+
+    spread = 0.0
+    for index, candidate in enumerate(close_candidates):
+        for other in close_candidates[index + 1:]:
+            spread = max(
+                spread,
+                _candidate_distance(candidate, other),
+            )
+
+    return {
+        "spread_m": round(spread, 2),
+        "ambiguous": spread >= AMBIGUITY_SPREAD_THRESHOLD_M,
+    }
+
+
+def _candidate_distance(candidate, other):
+    return float(
+        np.hypot(
+            float(candidate["x"]) - float(other["x"]),
+            float(candidate["y"]) - float(other["y"]),
+        )
+    )

@@ -3,8 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 import os
 
+from anchor_hints import apply_anchor_hint, detect_anchor_hint
 from knn_model import WifiKNNLocalizer
 from location_tracker import LocationTracker
+from signal_filter import RssiMedianFilter, RSSI_COLUMNS
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,7 +23,8 @@ app.add_middleware(
 
 def create_localizer():
     return WifiKNNLocalizer(
-        fingerprint_path=_configured_fingerprint_path()
+        fingerprint_path=_configured_fingerprint_path(),
+        n_neighbors=_configured_knn_neighbors(),
     )
 
 
@@ -36,8 +39,25 @@ def _configured_fingerprint_path():
     return os.path.join(PROJECT_ROOT, fingerprint_path)
 
 
+def _configured_knn_neighbors():
+    value = os.environ.get("WIFI_KNN_NEIGHBORS")
+    if not value:
+        return 3
+
+    try:
+        neighbors = int(value)
+    except ValueError as error:
+        raise ValueError("WIFI_KNN_NEIGHBORS must be a positive integer.") from error
+
+    if neighbors < 1:
+        raise ValueError("WIFI_KNN_NEIGHBORS must be a positive integer.")
+
+    return neighbors
+
+
 localizer = create_localizer()
 tracker = LocationTracker()
+signal_filter = RssiMedianFilter()
 
 
 # ==========================================
@@ -73,7 +93,14 @@ async def receive_scan(data: dict):
     Expected payload: {"rssi_a": -50, "rssi_b": -60, "rssi_c": -70, "rssi_d": -65}
     """
     try:
-        predicted_location = localizer.predict_location_details(data)
+        filtered_scan = signal_filter.apply(data)
+        predicted_location = localizer.predict_location_details(filtered_scan)
+        anchor_hint = detect_anchor_hint(filtered_scan, predicted_location)
+        predicted_location = apply_anchor_hint(predicted_location, anchor_hint)
+        predicted_location["filtered_rssi"] = {
+            key: filtered_scan.get(key)
+            for key in RSSI_COLUMNS
+        }
         payload_data = tracker.update(predicted_location, data)
 
         # Create the payload for the React Frontend

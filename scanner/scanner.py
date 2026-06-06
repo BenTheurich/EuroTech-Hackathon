@@ -264,12 +264,35 @@ def print_compact_status(scan_id, body, carried, location, loop_seconds):
     )
     position = "no prediction"
     if location:
-        position = (
-            f"x={location.get('x')} y={location.get('y')} "
-            f"conf={location.get('confidence')} {location.get('status')}"
-        )
+        ambiguity = location.get("ambiguity") or {}
+        anchor_hint = location.get("anchor_hint") or {}
+        ambiguous = "!" if ambiguity.get("ambiguous") else ""
+        anchor = "none"
+        if anchor_hint:
+            anchor = f"{anchor_hint.get('anchor')}:{anchor_hint.get('score')}"
+
+        position = " ".join([
+            f"x={location.get('x')} y={location.get('y')}",
+            f"conf={location.get('confidence')} {location.get('status')}",
+            f"knn=({_compact_number(location.get('knn_x'))},{_compact_number(location.get('knn_y'))})",
+            f"raw=({_compact_number(location.get('raw_x'))},{_compact_number(location.get('raw_y'))})",
+            f"nearest={location.get('nearest_distance')}",
+            f"amb={ambiguity.get('spread_m')}{ambiguous}",
+            f"anchor={anchor}",
+            f"held={location.get('held')}",
+        ])
 
     print(f"#{scan_id} {loop_seconds:.2f}s {anchors} -> {position}")
+
+
+def _compact_number(value):
+    if value is None:
+        return "None"
+
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+
+    return str(value)
 
 
 def print_verbose_status(payload, debug_info, carried, scan_wait_seconds, loop_seconds):
