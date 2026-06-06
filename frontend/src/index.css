@@ -1,14 +1,43 @@
-/* Minimal reset. (Tailwind was configured but not wired for v4 — the map UI
-   uses plain CSS in App.css, so nothing here depends on Tailwind. If the
-   frontend lead wants Tailwind, set up v4: `npm i -D @tailwindcss/postcss`,
-   put `@tailwindcss/postcss` in postcss.config.js, and replace this file with
-   `@import "tailwindcss";`.) */
-* {
+@import "tailwindcss";
+
+:root {
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+  font-family: var(--sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  /* Prevent accidental horizontal page overflow on small screens. */
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  background: #f8fafc;
+}
+
+#root {
+  height: 100vh;
+  height: 100dvh;
+}
+
+h1, h2, h3, h4 {
   margin: 0;
 }
 
-html,
-body,
-#root {
-  height: 100%;
+button {
+  font-family: var(--sans);
+}
+
+code {
+  font-family: var(--mono);
 }

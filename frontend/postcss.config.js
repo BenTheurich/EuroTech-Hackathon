@@ -1,6 +1,6 @@
-// No PostCSS plugins needed right now. (Tailwind v4 moved its PostCSS plugin to
-// `@tailwindcss/postcss`; the old `tailwindcss` entry here threw a build error,
-// so it was removed. Re-add `'@tailwindcss/postcss': {}` if you adopt Tailwind.)
+// Tailwind v4 ships its PostCSS plugin as a separate package.
 export default {
-  plugins: {},
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
 }
