@@ -17,7 +17,7 @@ export default function LiveMap() {
   const { position, trail } = useSmoothedLocation(targetPosition)
 
   return (
-    <div className="app">
+    <div className="app live-map-page">
       <header className="app-header">
         <div>
           <h1>RmFindr</h1>
