@@ -1,0 +1,49 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+!.env.sample
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# Node / Vite
+node_modules/
+dist/
+dist-ssr/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local runtime output
+data/latest_scan.json
+
+# IDEs and local agent/tool state
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.claude/
+.superpowers/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated artifacts
+*.egg-info/
+*.log
+*.pkl
+*.joblib

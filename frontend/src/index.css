@@ -1,0 +1,14 @@
+/* Minimal reset. (Tailwind was configured but not wired for v4 — the map UI
+   uses plain CSS in App.css, so nothing here depends on Tailwind. If the
+   frontend lead wants Tailwind, set up v4: `npm i -D @tailwindcss/postcss`,
+   put `@tailwindcss/postcss` in postcss.config.js, and replace this file with
+   `@import "tailwindcss";`.) */
+* {
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}

@@ -1,0 +1,206 @@
+:root {
+  --bg: #0f172a;
+  --panel: #1e293b;
+  --line: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --user: #38bdf8;
+  --anchor: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.app-header {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.status {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.status-connected .status-dot {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.status-connecting .status-dot {
+  background: #eab308;
+}
+
+.status-disconnected .status-dot {
+  background: #ef4444;
+}
+
+.map-wrap {
+  flex: 1 1 auto;
+  display: flex;
+  padding: clamp(10px, 1.8vw, 18px);
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.map-svg {
+  flex: 1 1 auto;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.map-floor {
+  fill: #0b1220;
+  stroke: var(--line);
+  stroke-width: 0.035;
+}
+
+.map-grid {
+  stroke: var(--line);
+  stroke-width: 0.018;
+  opacity: 0.35;
+}
+
+.map-trail {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 0.07;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.4;
+}
+
+.map-anchor {
+  fill: var(--anchor);
+  opacity: 0.9;
+}
+
+.map-anchor-label {
+  fill: #1a1300;
+  font-weight: 700;
+}
+
+/* Smoothly glide the dot to each new position instead of jumping */
+.map-user {
+  transition: transform 0.6s ease-out;
+}
+
+.map-user-dot {
+  fill: var(--user);
+  stroke: #fff;
+  stroke-width: 0.035;
+}
+
+.map-user-pulse {
+  fill: var(--user);
+  opacity: 0.25;
+  animation: pulse 1.8s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.app-footer {
+  flex: 0 0 auto;
+  padding: 9px 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 10px 12px;
+  }
+
+  .app-header h1 {
+    font-size: 1rem;
+  }
+
+  .subtitle,
+  .status,
+  .app-footer {
+    font-size: 0.75rem;
+  }
+
+  .map-wrap {
+    padding: 8px;
+  }
+
+  .app-footer {
+    padding: 8px 12px;
+  }
+}
