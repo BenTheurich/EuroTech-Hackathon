@@ -4,6 +4,7 @@ import json
 
 from knn_model import WifiKNNLocalizer
 from location_tracker import LocationTracker
+from pathfinding import find_route
 
 app = FastAPI()
 
@@ -66,6 +67,41 @@ async def receive_scan(data: dict):
             "status": "success",
             "predicted_location": payload_data,
         }
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/route")
+async def compute_route(request: dict):
+    """Dijkstra route from the visitor's live location to their destination.
+
+    The React frontend POSTs the user's current position, the destination POI
+    they picked, and the floor walls it is drawing:
+
+        {
+          "start": {"x": 3.2, "y": 1.7},
+          "goal":  {"x": 6.4, "y": 4.4},
+          "walls": ["h-0-0", "v-2-3", ...],   # optional, defaults to venue floor
+          "preference": "fastest"             # optional
+        }
+
+    Returns the route as a poly-line in the shared grid coordinate space so the
+    map can draw it directly (see pathfinding.find_route).
+    """
+    try:
+        start = request.get("start")
+        goal = request.get("goal")
+        if not start or not goal:
+            return {"status": "error", "message": "Both 'start' and 'goal' are required."}
+
+        route = find_route(
+            start,
+            goal,
+            walls=request.get("walls"),
+            preference=request.get("preference", "fastest"),
+        )
+        return {"status": "success", **route}
 
     except Exception as e:
         return {"status": "error", "message": str(e)}

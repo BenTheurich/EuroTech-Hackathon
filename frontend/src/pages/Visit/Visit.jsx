@@ -2,13 +2,15 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLocationSocket } from '../../useLocationSocket';
 import { useSmoothedLocation } from '../../useSmoothedLocation';
+import { findRoute } from '../../components/GridFloorPlan/gridRouting';
 import VisitorMap from '../../components/VisitorMap/VisitorMap';
 import {
   VENUE,
   DESTINATIONS,
   CATEGORIES,
   ROUTE_PREFERENCES,
-  visitorWalls,
+  FLOOR_FEATURES,
+  generateVenueWalls,
 } from './destinations';
 import styles from './Visit.module.css';
 
@@ -29,13 +31,31 @@ export default function Visit() {
   const { status, targetPosition } = useLocationSocket();
   const { position } = useSmoothedLocation(targetPosition);
 
-  const walls = useMemo(() => visitorWalls(), []);
+  // A fresh, complex, fully-connected floor for this session (stable across the
+  // welcome → prefs → navigate steps; reload the page for a new layout).
+  const walls = useMemo(() => generateVenueWalls(), []);
   const destination = DESTINATIONS.find((d) => d.id === destinationId) || null;
 
+  // Best-path Dijkstra route from the live position to the chosen POI, computed
+  // client-side over the walls we draw. Recomputing in this memo means the route
+  // auto-updates the instant the user moves (re-plans as they follow it or stray
+  // off it) or the floor's walls change (e.g. a wall is removed).
+  const route = useMemo(() => {
+    if (!position || !destination) return null;
+    return findRoute(
+      { x: position.x, y: position.y },
+      { x: destination.x, y: destination.y },
+      walls,
+      preferenceId,
+    );
+  }, [position, destination, walls, preferenceId]);
+
   const distanceMeters =
-    position && destination
-      ? Math.round(Math.hypot(destination.x - position.x, destination.y - position.y))
-      : null;
+    route?.reachable && typeof route.distance === 'number'
+      ? Math.round(route.distance)
+      : position && destination
+        ? Math.round(Math.hypot(destination.x - position.x, destination.y - position.y))
+        : null;
 
   const chooseDestination = (id) => {
     setDestinationId(id);
@@ -81,6 +101,7 @@ export default function Visit() {
             walls={walls}
             position={position}
             destination={destination}
+            route={route}
             preferenceId={preferenceId}
             distanceMeters={distanceMeters}
             statusLabel={STATUS_LABELS[status] || status}
@@ -186,6 +207,7 @@ function NavigateStep({
   walls,
   position,
   destination,
+  route,
   preferenceId,
   distanceMeters,
   statusLabel,
@@ -206,7 +228,13 @@ function NavigateStep({
 
       <div className={styles.navLayout}>
         <div className={styles.mapCard}>
-          <VisitorMap walls={walls} position={position} destination={destination} />
+          <VisitorMap
+            walls={walls}
+            position={position}
+            destination={destination}
+            route={route}
+            features={FLOOR_FEATURES}
+          />
         </div>
 
         <aside className={styles.panel}>
@@ -247,6 +275,7 @@ function NavigateStep({
             <span className={styles.legendItem}><span className={styles.lgUser} /> You</span>
             <span className={styles.legendItem}><span className={styles.lgDest} /> Destination</span>
             <span className={styles.legendItem}><span className={styles.lgAnchor} /> Wi-Fi anchor</span>
+            <span className={styles.legendItem}><span aria-hidden="true">🛗</span> Stairs &amp; lift</span>
           </div>
         </aside>
       </div>

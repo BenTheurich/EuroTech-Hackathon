@@ -7,15 +7,15 @@
 .label {
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--muted);
   white-space: nowrap;
 }
 
 .tabs {
   display: flex;
   gap: 4px;
-  background: #f1f5f9;
-  border-radius: 8px;
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
   padding: 4px;
 }
 
@@ -25,22 +25,22 @@
   background: transparent;
   border-radius: 6px;
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted);
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .tab:hover {
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--border-soft);
+  color: var(--ink-2);
 }
 
 .tab.active {
-  background: #fff;
-  color: #1e40af;
+  background: var(--surface);
+  color: var(--accent-strong);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 @media (max-width: 480px) {

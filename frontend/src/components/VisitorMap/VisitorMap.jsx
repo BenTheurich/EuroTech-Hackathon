@@ -6,22 +6,41 @@ import styles from './VisitorMap.module.css';
 // the two interfaces share one design, and overlays:
 //   • the visitor's live, smoothed position (from the backend KNN /ws)
 //   • their chosen destination
-//   • a direct guide line between the two
+//   • the Dijkstra route (computed on the backend over the drawn walls)
 //
 // All coordinates are in the shared KNN grid space (x 0–7, y 0–5).
-export default function VisitorMap({ walls, position, destination }) {
+export default function VisitorMap({ walls, position, destination, route, features = [] }) {
   const ringRadius = position ? confidenceRingRadius(position.confidence) : 0;
+
+  // The backend returns the route as a poly-line of grid points; fall back to a
+  // straight guide line if it hasn't arrived yet.
+  const routePoints = route?.path?.length
+    ? route.path.map((p) => `${p.x},${p.y}`).join(' ')
+    : position && destination
+      ? `${position.x},${position.y} ${destination.x},${destination.y}`
+      : null;
 
   return (
     <GridFloorPlan walls={walls} editable={false}>
-      {/* Guide line from the visitor to the destination */}
-      {position && destination && (
-        <line
-          x1={position.x}
-          y1={position.y}
-          x2={destination.x}
-          y2={destination.y}
+      {/* Fixed floor landmarks (stairs, lift). Skip the one currently selected
+          as the destination so its prominent marker isn't drawn twice. */}
+      {features
+        .filter((f) => f.id !== destination?.id)
+        .map((f) => (
+          <g key={f.id} transform={`translate(${f.x}, ${f.y})`} className={styles.feature}>
+            <circle r={0.26} className={styles.featureHalo} />
+            <text y={0.1} textAnchor="middle" fontSize={0.3} className={styles.featureIcon}>
+              {f.icon}
+            </text>
+          </g>
+        ))}
+
+      {/* Dijkstra route from the visitor to the destination, following corridors */}
+      {routePoints && (
+        <polyline
+          points={routePoints}
           className={styles.route}
+          fill="none"
         />
       )}
 

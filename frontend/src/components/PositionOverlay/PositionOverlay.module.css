@@ -3,29 +3,31 @@
   pointer-events: none;
 }
 
+/* Raw, noisy reading — warm clay tint. */
 .raw {
-  fill: rgba(231, 76, 60, 0.25);
-  stroke: #e74c3c;
+  fill: rgba(196, 96, 64, 0.22);
+  stroke: #b9573a;
   stroke-width: 0.04;
 }
 
 .rawDot {
-  fill: #e74c3c;
+  fill: #b9573a;
 }
 
+/* Filtered position — calm sage. */
 .filtered {
-  fill: rgba(52, 152, 219, 0.25);
-  stroke: #3498db;
+  fill: rgba(118, 135, 92, 0.24);
+  stroke: #66744f;
   stroke-width: 0.04;
 }
 
 .filteredDot {
-  fill: #3498db;
+  fill: #66744f;
 }
 
 .pulse {
   fill: none;
-  stroke: #3498db;
+  stroke: #66744f;
   stroke-width: 0.025;
   transform-box: fill-box;
   transform-origin: center;

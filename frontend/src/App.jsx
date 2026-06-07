@@ -31,9 +31,9 @@ export default function App() {
 
 function PlaceholderPage({ title }) {
   return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3 text-slate-400">
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3 text-stone-400">
       <span className="text-5xl">🚧</span>
-      <span className="text-lg font-semibold">{title}</span>
+      <span className="text-lg font-semibold text-stone-600">{title}</span>
       <span className="text-sm">Coming soon</span>
     </div>
   );

@@ -3,7 +3,7 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #f8fafc;
+  background: transparent; /* let the warm body wash show through */
 }
 
 .main {
@@ -19,13 +19,13 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 28px;
+  padding: 32px clamp(20px, 4vw, 40px);
 }
 
 /* Tablet */
 @media (max-width: 1023px) {
   .content {
-    padding: 20px;
+    padding: 22px;
   }
 }
 

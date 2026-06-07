@@ -2,10 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Dashboard.module.css';
 
 const STATS = [
-  { label: 'Buildings', value: '3', icon: '🏢', color: '#3b82f6' },
-  { label: 'Access Points', value: '12', icon: '📡', color: '#8b5cf6' },
-  { label: 'Active Users', value: '24', icon: '👤', color: '#10b981' },
-  { label: 'Avg. Location Error', value: '1.8m', icon: '📍', color: '#f59e0b' },
+  { label: 'Buildings', value: '3', icon: '🏢', color: '#c0623c' },
+  { label: 'Access Points', value: '12', icon: '📡', color: '#76875c' },
+  { label: 'Active Users', value: '24', icon: '👤', color: '#c2974a' },
+  { label: 'Avg. Location Error', value: '1.8m', icon: '📍', color: '#a9694e' },
 ];
 
 const RECENT_ACTIVITY = [
@@ -20,6 +20,29 @@ export default function Dashboard() {
 
   return (
     <div className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.heroText}>
+          <span className={styles.heroKicker}>Indoor navigation platform</span>
+          <h1 className={styles.heroTitle}>Welcome back</h1>
+          <p className={styles.heroLede}>
+            Your venues are live and tracking. Draw floor plans, place anchors and
+            guide visitors — all from one calm console.
+          </p>
+          <div className={styles.heroActions}>
+            <button className={styles.heroBtn} onClick={() => navigate('/buildings')}>
+              Open buildings
+            </button>
+            <button className={styles.heroBtnGhost} onClick={() => navigate('/visit')}>
+              Preview visitor view ↗
+            </button>
+          </div>
+        </div>
+        <div className={styles.heroArt} aria-hidden="true">
+          <span className={styles.heroOrb} />
+          <span className={styles.heroPin}>📍</span>
+        </div>
+      </section>
+
       <div className={styles.statsGrid}>
         {STATS.map((s) => (
           <div key={s.label} className={styles.statCard}>
