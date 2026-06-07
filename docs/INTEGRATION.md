@@ -55,6 +55,65 @@ cannot be the scanner. We localize laptops and demo the tech on them.
    The frontend `FLOOR` and `ANCHORS` constants match the collected fingerprint
    map: `x = 0..7`, `y = 0..5`.
 
+4. Navigation routing. Walls are impassable segments on the lattice edges (the
+   same `h-x-y` / `v-x-y` keys the editor draws). The route runs **straight**
+   where the floor is open and **bends only where a wall blocks the way**, and
+   it never crosses a wall or squeezes diagonally between two walls that meet at
+   a corner. Method:
+
+   * Line of sight is tested with a **DDA grid march** — it walks the cells a
+     straight line passes through and checks the actual cell edge it crosses
+     each step. At a diagonal vertex it requires one of the two L-detours around
+     the corner to be fully open, which is what prevents corner cutting.
+   * The path is the shortest route over a **visibility graph of the cell
+     centres** (+ the real start and goal); cell centres sit off every wall
+     line, so routing is robust. Dijkstra picks the shortest clear path.
+
+   Two equivalent implementations share these semantics:
+
+   * `frontend/src/components/GridFloorPlan/gridRouting.js` runs **in the
+     browser** and powers the visitor map. Routing client-side lets the path
+     re-plan instantly as the user moves (follows it or strays off it) and the
+     moment a wall is added/removed, with no per-move round-trip and no straight
+     line through walls if the backend is briefly unreachable. The live position
+     still comes from the backend `/ws`; only the path search is local.
+   * `backend/pathfinding.py`, exposed as HTTP `POST /api/route`, is the
+     equivalent **server-side** API for other clients.
+
+   The visitor floor itself is generated fresh each session by
+   `frontend/src/components/GridFloorPlan/floorGen.js` (a randomized,
+   guaranteed-connected rooms-and-corridors layout), so every destination stays
+   reachable while the router has real walls to work around. A destination that
+   is walled off entirely returns `reachable: false` with a direct-segment
+   fallback.
+
+   ```json
+   {
+     "start": {"x": 3.2, "y": 1.7},
+     "goal":  {"x": 6.4, "y": 4.4},
+     "walls": ["h-0-0", "v-2-3"],
+     "preference": "fastest"
+   }
+   ```
+
+   Response:
+
+   ```json
+   {
+     "status": "success",
+     "reachable": true,
+     "preference": "fastest",
+     "path": [{"x": 3.2, "y": 1.7}, {"x": 5, "y": 3}, {"x": 6.4, "y": 4.4}],
+     "distance": 4.86
+   }
+   ```
+
+   `path` starts at the real position and ends at the real destination, with a
+   wall corner in between only where the route has to turn.
+
+   `walls` is optional; the backend falls back to the venue floor in
+   `pathfinding.default_walls` when it is absent. See `backend/pathfinding.py`.
+
 Training uses `data/fingerprints_clean.csv` when it exists. That file is
 generated from `data/fingerprints.csv` and keeps the raw measurements untouched.
 

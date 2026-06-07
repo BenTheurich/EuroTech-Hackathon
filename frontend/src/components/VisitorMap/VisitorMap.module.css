@@ -1,0 +1,78 @@
+/* Values are in grid units (GridFloorPlan's viewBox is the KNN coord space). */
+
+.route {
+  stroke: var(--accent);
+  stroke-width: 0.08;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 0.22 0.22;
+  opacity: 0.85;
+}
+
+.feature {
+  pointer-events: none;
+}
+
+.featureHalo {
+  fill: rgba(138, 114, 87, 0.14);
+  stroke: rgba(138, 114, 87, 0.4);
+  stroke-width: 0.02;
+}
+
+.featureIcon {
+  pointer-events: none;
+}
+
+.destHalo {
+  fill: rgba(192, 98, 60, 0.16);
+}
+
+.destDot {
+  fill: var(--accent);
+}
+
+.destIcon {
+  pointer-events: none;
+}
+
+.user {
+  pointer-events: none;
+}
+
+.userConfidence {
+  fill: #76875c;
+  opacity: 0.12;
+  stroke: #76875c;
+  stroke-width: 0.03;
+}
+
+.user_low_confidence .userConfidence,
+.user_constrained .userConfidence {
+  stroke: var(--gold);
+  opacity: 0.18;
+}
+
+.userDot {
+  fill: #66744f;
+  stroke: #fffdf8;
+  stroke-width: 0.04;
+}
+
+.userPulse {
+  fill: #76875c;
+  opacity: 0.25;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: visitorPulse 1.8s ease-out infinite;
+}
+
+@keyframes visitorPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}

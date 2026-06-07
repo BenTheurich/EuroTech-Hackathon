@@ -1,0 +1,70 @@
+.container {
+  width: 100%;
+  max-width: 100%;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  overflow: auto; /* on tiny screens, pan inside the map — not the whole page */
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), var(--shadow-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 320px;
+  touch-action: manipulation;
+  background: transparent;
+}
+
+.floor {
+  fill: #fbf6ec;
+}
+
+.gridLines line {
+  stroke: #ece1cf;
+  stroke-width: 0.018;
+}
+
+.walls .wall {
+  stroke: #8a7257;
+  stroke-width: 0.12;
+  stroke-linecap: round;
+}
+
+.vertices circle {
+  fill: #d8c9b2;
+  opacity: 0.75;
+}
+
+.anchor {
+  fill: var(--accent);
+}
+
+.anchorLabel {
+  fill: #fffaf2;
+  font-weight: 700;
+  font-family: var(--sans);
+}
+
+.anchorGroup {
+  pointer-events: none;
+}
+
+.hotspot {
+  stroke: transparent;
+  stroke-width: 0.3;
+  stroke-linecap: round;
+  cursor: pointer;
+  transition: stroke 0.12s ease;
+}
+
+.hotspot:hover {
+  stroke: rgba(192, 98, 60, 0.3);
+}
+
+/* A drawn wall's hot-zone shows a subtle warm-red tint on hover (click = remove). */
+.hotspotActive:hover {
+  stroke: rgba(180, 70, 50, 0.28);
+}

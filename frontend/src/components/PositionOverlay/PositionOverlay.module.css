@@ -1,0 +1,50 @@
+/* Values are in grid units (the SVG viewBox is the KNN coordinate space). */
+.overlay {
+  pointer-events: none;
+}
+
+/* Raw, noisy reading — warm clay tint. */
+.raw {
+  fill: rgba(196, 96, 64, 0.22);
+  stroke: #b9573a;
+  stroke-width: 0.04;
+}
+
+.rawDot {
+  fill: #b9573a;
+}
+
+/* Filtered position — calm sage. */
+.filtered {
+  fill: rgba(118, 135, 92, 0.24);
+  stroke: #66744f;
+  stroke-width: 0.04;
+}
+
+.filteredDot {
+  fill: #66744f;
+}
+
+.pulse {
+  fill: none;
+  stroke: #66744f;
+  stroke-width: 0.025;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse 1.8s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+}

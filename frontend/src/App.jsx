@@ -1,48 +1,40 @@
-import './App.css'
-import { useLocationSocket } from './useLocationSocket'
-import { useSmoothedLocation } from './useSmoothedLocation'
-import MapView from './MapView'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout/Layout';
+import Dashboard from './pages/Dashboard/Dashboard';
+import Buildings from './pages/Buildings/Buildings';
+import FloorPlanViewer from './pages/FloorPlanViewer/FloorPlanViewer';
+import LiveMap from './pages/LiveMap/LiveMap';
+import Visit from './pages/Visit/Visit';
 
-const STATUS_LABELS = {
-  connecting: 'Connecting…',
-  connected: 'Live',
-  disconnected: 'Reconnecting…',
-}
-
-function App() {
-  const { status, targetPosition } = useLocationSocket()
-  const { position, trail } = useSmoothedLocation(targetPosition)
-
+// Two sites in one app:
+//   /        → admin dashboard (Layout shell: sidebar + header + pages)
+//   /visit   → visitor interface (QR landing: welcome → guide → live map)
+//   /live    → raw full-screen live KNN map (monitoring view)
+export default function App() {
   return (
-    <div className="app">
-      <header className="app-header">
-        <div>
-          <h1>Indoor Positioning</h1>
-          <p className="subtitle">Live Wi-Fi fingerprint tracking</p>
-        </div>
-        <div className={`status status-${status}`}>
-          <span className="status-dot" />
-          {STATUS_LABELS[status] || status}
-        </div>
-      </header>
-
-      <main className="map-wrap">
-        <MapView position={position} trail={trail} />
-      </main>
-
-      <footer className="app-footer">
-        {position ? (
-          <span>
-            Position: x = {position.x.toFixed(1)}, y = {position.y.toFixed(1)}
-            {' '}
-            confidence = {Math.round((position.confidence ?? 1) * 100)}%
-          </span>
-        ) : (
-          <span>Waiting for the first reading from the scanner…</span>
-        )}
-      </footer>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="buildings" element={<Buildings />} />
+          <Route path="buildings/:id" element={<FloorPlanViewer />} />
+          <Route path="access-points" element={<PlaceholderPage title="Access Points" />} />
+          <Route path="analytics" element={<PlaceholderPage title="Analytics" />} />
+          <Route path="settings" element={<PlaceholderPage title="Settings" />} />
+        </Route>
+        <Route path="/visit" element={<Visit />} />
+        <Route path="/live" element={<LiveMap />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+function PlaceholderPage({ title }) {
+  return (
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3 text-stone-400">
+      <span className="text-5xl">🚧</span>
+      <span className="text-lg font-semibold text-stone-600">{title}</span>
+      <span className="text-sm">Coming soon</span>
+    </div>
+  );
+}

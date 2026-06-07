@@ -7,15 +7,18 @@
     "dev": "vite",
     "build": "vite build",
     "test:smoothing": "node src/locationSmoothing.test.mjs",
+    "test:routing": "node src/components/GridFloorPlan/gridRouting.test.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.17.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@tailwindcss/postcss": "^4.3.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

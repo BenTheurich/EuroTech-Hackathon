@@ -1,12 +1,12 @@
+/* LiveMap full-screen view — warm, calm theme (matches the app tokens). */
 :root {
-  --bg: #0f172a;
-  --panel: #1e293b;
-  --line: #334155;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --accent: #38bdf8;
-  --user: #38bdf8;
-  --anchor: #f59e0b;
+  --live-panel: #fffdf8;
+  --live-line: #e7dcca;
+  --live-text: #342f28;
+  --live-muted: #978b77;
+  --live-accent: #c0623c;
+  --live-user: #66744f;
+  --live-anchor: #c0623c;
 }
 
 * {
@@ -31,9 +31,12 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--bg);
-  color: var(--text);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background:
+    radial-gradient(820px 560px at 8% -8%, rgba(192, 98, 60, 0.07), transparent 60%),
+    radial-gradient(760px 560px at 104% 4%, rgba(118, 135, 92, 0.07), transparent 58%),
+    linear-gradient(180deg, #f6f0e6 0%, #f1e8da 100%);
+  color: var(--live-text);
+  font-family: var(--sans, system-ui, sans-serif);
 }
 
 .app-header {
@@ -42,19 +45,34 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--line);
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--live-line);
+  background: rgba(255, 253, 248, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-family: var(--display, serif);
+  font-size: 1.4rem;
+  font-weight: 600;
 }
 
 .subtitle {
   margin: 2px 0 0;
-  color: var(--muted);
+  color: var(--live-muted);
   font-size: 0.85rem;
+}
+
+.app-backlink {
+  color: var(--live-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.app-backlink:hover {
+  text-decoration: underline;
 }
 
 .status {
@@ -63,30 +81,31 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  padding: 6px 12px;
+  font-weight: 600;
+  padding: 7px 14px;
   border-radius: 999px;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  background: var(--live-panel);
+  border: 1px solid var(--live-line);
 }
 
 .status-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--muted);
+  background: var(--live-muted);
 }
 
 .status-connected .status-dot {
-  background: #22c55e;
-  box-shadow: 0 0 8px #22c55e;
+  background: #76875c;
+  box-shadow: 0 0 8px #76875c;
 }
 
 .status-connecting .status-dot {
-  background: #eab308;
+  background: #c2974a;
 }
 
 .status-disconnected .status-dot {
-  background: #ef4444;
+  background: #c0563a;
 }
 
 .map-wrap {
@@ -105,26 +124,27 @@ body {
   height: 100%;
   min-width: 0;
   min-height: 0;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  background: var(--live-panel);
+  border: 1px solid var(--live-line);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(96, 70, 38, 0.07);
 }
 
 .map-floor {
-  fill: #0b1220;
-  stroke: var(--line);
+  fill: #fbf6ec;
+  stroke: var(--live-line);
   stroke-width: 0.035;
 }
 
 .map-grid {
-  stroke: var(--line);
+  stroke: #ece1cf;
   stroke-width: 0.018;
-  opacity: 0.35;
+  opacity: 0.6;
 }
 
 .map-trail {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--live-user);
   stroke-width: 0.07;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -132,12 +152,12 @@ body {
 }
 
 .map-anchor {
-  fill: var(--anchor);
-  opacity: 0.9;
+  fill: var(--live-anchor);
+  opacity: 0.92;
 }
 
 .map-anchor-label {
-  fill: #1a1300;
+  fill: #fffaf2;
   font-weight: 700;
 }
 
@@ -146,26 +166,26 @@ body {
 }
 
 .map-user-confidence {
-  fill: var(--user);
+  fill: var(--live-user);
   opacity: 0.12;
-  stroke: var(--user);
+  stroke: var(--live-user);
   stroke-width: 0.035;
 }
 
 .map-user-low_confidence .map-user-confidence,
 .map-user-constrained .map-user-confidence {
   opacity: 0.18;
-  stroke: #facc15;
+  stroke: #c2974a;
 }
 
 .map-user-dot {
-  fill: var(--user);
-  stroke: #fff;
+  fill: var(--live-user);
+  stroke: #fffdf8;
   stroke-width: 0.035;
 }
 
 .map-user-pulse {
-  fill: var(--user);
+  fill: var(--live-user);
   opacity: 0.25;
   animation: pulse 1.8s ease-out infinite;
 }
@@ -183,9 +203,9 @@ body {
 
 .app-footer {
   flex: 0 0 auto;
-  padding: 9px 20px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
+  padding: 10px 22px;
+  border-top: 1px solid var(--live-line);
+  color: var(--live-muted);
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
   overflow: hidden;
@@ -195,11 +215,11 @@ body {
 
 @media (max-width: 640px) {
   .app-header {
-    padding: 10px 12px;
+    padding: 10px 14px;
   }
 
   .app-header h1 {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 
   .subtitle,
@@ -213,6 +233,6 @@ body {
   }
 
   .app-footer {
-    padding: 8px 12px;
+    padding: 8px 14px;
   }
 }

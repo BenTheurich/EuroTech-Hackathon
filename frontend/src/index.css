@@ -1,14 +1,128 @@
-/* Minimal reset. (Tailwind was configured but not wired for v4 — the map UI
-   uses plain CSS in App.css, so nothing here depends on Tailwind. If the
-   frontend lead wants Tailwind, set up v4: `npm i -D @tailwindcss/postcss`,
-   put `@tailwindcss/postcss` in postcss.config.js, and replace this file with
-   `@import "tailwindcss";`.) */
-* {
-  margin: 0;
+@import "tailwindcss";
+
+/* ============================================================================
+   RmFindr theme — warm, calm, minimalist-artsy.
+   A single source of truth for colour, type, radius and shadow tokens. CSS
+   custom properties cascade into the CSS-module class rules across the app, so
+   re-skinning happens here.
+   ========================================================================== */
+:root {
+  /* Type */
+  --display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans: 'Mulish', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  /* Surfaces — warm paper & cream */
+  --bg: #f4eee4;
+  --surface: #fffdf8;
+  --surface-2: #f8f1e6;
+  --border: #e7dcca;
+  --border-soft: #f0e8d9;
+
+  /* Ink — warm near-black through taupe */
+  --ink: #342f28;
+  --ink-2: #5f5648;
+  --muted: #978b77;
+  --faint: #c3b6a1;
+
+  /* Accent — terracotta / clay */
+  --accent: #c0623c;
+  --accent-strong: #a44c29;
+  --accent-soft: #f7e8df;
+  --accent-border: #ebcfbe;
+
+  /* Sage — calm green for "live / online / good" states */
+  --sage: #76875c;
+  --sage-strong: #62714b;
+  --sage-soft: #eef1e3;
+  --sage-border: #d6ddc2;
+
+  /* Warm gold for highlights */
+  --gold: #c2974a;
+
+  /* Espresso — the dark navigation rail */
+  --espresso: #2b2420;
+  --espresso-2: #332b25;
+  --espresso-line: rgba(255, 250, 240, 0.08);
+  --on-espresso: #eee4d4;
+  --on-espresso-muted: #a99a84;
+
+  /* Depth */
+  --shadow-sm: 0 1px 2px rgba(74, 54, 30, 0.05);
+  --shadow: 0 12px 30px rgba(96, 70, 38, 0.07);
+  --shadow-lg: 0 22px 50px rgba(96, 70, 38, 0.13);
+
+  /* Radius */
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+
+  font-family: var(--sans);
+  color: var(--ink);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-html,
-body,
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  /* A soft, warm wash with two faint colour pools so the page never reads flat. */
+  background:
+    radial-gradient(820px 560px at 8% -8%, rgba(192, 98, 60, 0.07), transparent 60%),
+    radial-gradient(760px 560px at 104% 4%, rgba(118, 135, 92, 0.07), transparent 58%),
+    linear-gradient(180deg, #f6f0e6 0%, #f1e8da 100%);
+  background-attachment: fixed;
+}
+
 #root {
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: var(--sans);
+}
+
+code {
+  font-family: var(--mono);
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* Calmer, warm scrollbars */
+* {
+  scrollbar-color: var(--faint) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--faint);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
 }
