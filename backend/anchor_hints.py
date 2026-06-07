@@ -3,15 +3,16 @@ import math
 from pathlib import Path
 
 
-# x/y are the corner positions in the new 17 x 10 grid (x 0..16, y 0..9).
-# The `threshold` values below are fallback defaults; if
-# data/anchor_thresholds.json exists (written by derive_anchor_thresholds.py),
-# its values override them so the hint is tuned to the real collected signals.
+# x/y are the corner positions of the 7 x 5 m demo room (meters; x 0..7, y 0..5)
+# captured in fingerprints1400.csv. The `threshold` values below are fallback
+# defaults; if data/anchor_thresholds.json exists (written by
+# derive_anchor_thresholds.py), its values override them so the hint is tuned to
+# the real collected signals.
 ANCHORS = {
     "rssi_a": {"anchor": "A", "x": 0.0, "y": 0.0, "threshold": -40.0},
-    "rssi_b": {"anchor": "B", "x": 16.0, "y": 0.0, "threshold": -47.0},
-    "rssi_c": {"anchor": "C", "x": 0.0, "y": 9.0, "threshold": -34.0},
-    "rssi_d": {"anchor": "D", "x": 16.0, "y": 9.0, "threshold": -36.0},
+    "rssi_b": {"anchor": "B", "x": 7.0, "y": 0.0, "threshold": -47.0},
+    "rssi_c": {"anchor": "C", "x": 0.0, "y": 5.0, "threshold": -34.0},
+    "rssi_d": {"anchor": "D", "x": 7.0, "y": 5.0, "threshold": -36.0},
 }
 
 _THRESHOLDS_PATH = Path(__file__).resolve().parent.parent / "data" / "anchor_thresholds.json"
@@ -36,8 +37,12 @@ _load_threshold_overrides()
 
 MIN_HINT_SCORE = 0.5
 HIGH_CONFIDENCE_HINT_SCORE = 0.75
-HIGH_CONFIDENCE_ANCHOR_WEIGHT = 0.70
-NORMAL_ANCHOR_WEIGHT = 0.45
+# The hint is a gentle nudge toward a corner, NOT a snap. Earlier values
+# (0.70/0.45) teleported the dot onto whichever anchor read strongest, which
+# wrecked tracking when one anchor was out-of-distribution (e.g. a phone hotspot
+# read -18 dBm right next to it). Keep these low so the KNN stays in charge.
+HIGH_CONFIDENCE_ANCHOR_WEIGHT = 0.30
+NORMAL_ANCHOR_WEIGHT = 0.15
 CANDIDATE_CONTEXT_RADIUS_M = 2.5
 
 
