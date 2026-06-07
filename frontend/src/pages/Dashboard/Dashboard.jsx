@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import styles from './Dashboard.module.css';
+import Icon from '../../components/Icon/Icon';
 
 const STATS = [
-  { label: 'Buildings', value: '3', icon: 'src/assets/icons/buildingsstats.jpeg', color: '#c0623c' },
-  { label: 'Access Points', value: '12', icon: 'src/assets/icons/access_points.jpeg', color: '#76875c' },
-  { label: 'Active Users', value: '24', icon: 'src/assets/icons/active_users.jpeg', color: '#c2974a' },
-  { label: 'Avg. Location Error', value: '1.8m', icon: 'src/assets/icons/avg_location_error.jpeg', color: '#a9694e' },
+  { label: 'Buildings', value: '3', icon: '/icons/buildingsstats.jpeg', color: '#c0623c' },
+  { label: 'Access Points', value: '12', icon: '/icons/accesspt.jpeg', color: '#76875c' },
+  { label: 'Active Users', value: '24', icon: '/icons/active_users.jpeg', color: '#c2974a' },
+  { label: 'Avg. Location Error', value: '1.8m', icon: '/icons/livemap.jpeg', color: '#a9694e' },
 ];
 
 const RECENT_ACTIVITY = [
@@ -47,7 +48,7 @@ export default function Dashboard() {
         {STATS.map((s) => (
           <div key={s.label} className={styles.statCard}>
             <div className={styles.statIcon} style={{ background: s.color + '18', color: s.color }}>
-              {s.icon}
+              <Icon icon={s.icon} alt={s.label} />
             </div>
             <div>
               <div className={styles.statValue}>{s.value}</div>
@@ -82,19 +83,17 @@ export default function Dashboard() {
           </div>
           <div className={styles.actions}>
             <button className={styles.actionBtn} onClick={() => navigate('/buildings')}>
-              <span>
-                <img src="src/assets/icons/buildingsstats.jpeg" alt="Buildings" />
-              </span>
+              <span><Icon icon="/icons/buildingsstats.jpeg" alt="" /></span>
               Manage Buildings
             </button>
             <button className={styles.actionBtn} onClick={() => navigate('/buildings')}>
-              <span>src/assets/icons/floor_plans.jpeg</span> Open Floor Plans
+              <span><Icon icon="/icons/campus_view_building_var.jpeg" alt="" /></span> Open Floor Plans
             </button>
             <button className={styles.actionBtn}>
-              <span>src/assets/icons/access_points.jpeg</span> Configure Access Points
+              <span><Icon icon="/icons/accesspt.jpeg" alt="" /></span> Configure Access Points
             </button>
             <button className={styles.actionBtn}>
-              <span>src/assets/icons/analytics.jpeg</span> View Analytics
+              <span><Icon icon="/icons/analytics.jpeg" alt="" /></span> View Analytics
             </button>
           </div>
         </div>

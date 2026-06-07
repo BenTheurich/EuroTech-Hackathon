@@ -1,14 +1,15 @@
 import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
+import Icon from '../Icon/Icon';
 
 const NAV_ITEMS = [
   { to: '/', icon: '⊞', label: 'Dashboard', end: true },
-  { to: '/buildings', icon: 'src/assets/icons/buildingsstats.jpeg', label: 'Buildings' },
-  { to: '/visit', icon: 'src/assets/icons/user_profile.jpeg', label: 'Visitor View' },
-  { to: '/live', icon: 'src/assets/icons/livemap.jpeg', label: 'Live Map' },
-  { to: '/access-points', icon: 'src/assets/icons/accesspt.jpeg', label: 'Access Points' },
-  { to: '/analytics', icon: 'src/assets/icons/analytics.jpeg', label: 'Analytics' },
-  { to: '/settings', icon: 'src/assets/icons/settings.jpeg', label: 'Settings' },
+  { to: '/buildings', icon: '/icons/buildingsstats.jpeg', label: 'Buildings' },
+  { to: '/visit', icon: '/icons/user_profile.jpeg', label: 'Visitor View' },
+  { to: '/live', icon: '/icons/livemap.jpeg', label: 'Live Map' },
+  { to: '/access-points', icon: '/icons/accesspt.jpeg', label: 'Access Points' },
+  { to: '/analytics', icon: '/icons/analytics.jpeg', label: 'Analytics' },
+  { to: '/settings', icon: '/icons/settings.jpeg', label: 'Settings' },
 ];
 
 export default function Sidebar({ open = false, onClose }) {
@@ -47,7 +48,7 @@ export default function Sidebar({ open = false, onClose }) {
                   `${styles.navItem} ${isActive ? styles.active : ''}`
                 }
               >
-                <span className={styles.navIcon}>{item.icon}</span>
+                <span className={styles.navIcon}><Icon icon={item.icon} alt="" /></span>
                 {item.label}
               </NavLink>
             ))}
@@ -64,7 +65,7 @@ export default function Sidebar({ open = false, onClose }) {
                   `${styles.navItem} ${isActive ? styles.active : ''}`
                 }
               >
-                <span className={styles.navIcon}>{item.icon}</span>
+                <span className={styles.navIcon}><Icon icon={item.icon} alt="" /></span>
                 {item.label}
               </NavLink>
             ))}

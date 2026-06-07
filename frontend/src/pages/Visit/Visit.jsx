@@ -12,6 +12,7 @@ import {
   FLOOR_FEATURES,
   generateVenueWalls,
 } from './destinations';
+import Icon from '../../components/Icon/Icon';
 import styles from './Visit.module.css';
 
 const STATUS_LABELS = {
@@ -153,7 +154,7 @@ function WelcomeStep({ query, setQuery, category, setCategory, onChoose }) {
       <div className={styles.destGrid}>
         {list.map((d) => (
           <button key={d.id} className={styles.destCard} onClick={() => onChoose(d.id)}>
-            <span className={styles.destCardIcon}>{d.icon}</span>
+            <span className={styles.destCardIcon}><Icon icon={d.icon} alt="" /></span>
             <span className={styles.destCardLabel}>{d.label}</span>
             <span className={styles.destCardGo}>→</span>
           </button>
@@ -172,7 +173,7 @@ function PrefsStep({ destination, preferenceId, setPreferenceId, onBack, onStart
       <button className={styles.backBtn} onClick={onBack}>← Change destination</button>
 
       <div className={styles.prefsHead}>
-        <span className={styles.prefsDestIcon}>{destination.icon}</span>
+        <span className={styles.prefsDestIcon}><Icon icon={destination.icon} alt="" /></span>
         <div>
           <span className={styles.prefsDestLabel}>Going to {destination.label}</span>
           <span className={styles.prefsDestSub}>{VENUE.name}</span>
@@ -188,7 +189,7 @@ function PrefsStep({ destination, preferenceId, setPreferenceId, onBack, onStart
             className={`${styles.prefCard} ${preferenceId === p.id ? styles.prefCardActive : ''}`}
             onClick={() => setPreferenceId(p.id)}
           >
-            <span className={styles.prefIcon}>{p.icon}</span>
+            <span className={styles.prefIcon}><Icon icon={p.icon} alt="" /></span>
             <span className={styles.prefText}>
               <span className={styles.prefLabel}>{p.label}</span>
               <span className={styles.prefHint}>{p.hint}</span>
@@ -241,7 +242,7 @@ function NavigateStep({
           <div className={styles.panelCard}>
             <span className={styles.panelKicker}>Destination</span>
             <div className={styles.panelDest}>
-              <span className={styles.panelDestIcon}>{destination.icon}</span>
+              <span className={styles.panelDestIcon}><Icon icon={destination.icon} alt="" /></span>
               <span className={styles.panelDestLabel}>{destination.label}</span>
             </div>
             <div className={styles.panelRow}>
@@ -252,7 +253,7 @@ function NavigateStep({
             </div>
             <div className={styles.panelRow}>
               <span className={styles.panelLabel}>Route</span>
-              <span className={styles.panelValue}>{pref?.icon} {pref?.label}</span>
+              <span className={styles.panelValue}><Icon icon={pref?.icon} alt="" /> {pref?.label}</span>
             </div>
             <div className={styles.panelRow}>
               <span className={styles.panelLabel}>Your position</span>
