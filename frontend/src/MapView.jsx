@@ -67,6 +67,14 @@ export default function MapView({ position, trail }) {
         </g>
       ))}
 
+      {/* Raw KNN estimate (pre-smoothing). Drawn faint so the gap between it and
+          the tracked dot below makes the filter/tracker's smoothing visible. */}
+      {position &&
+        typeof position.rawX === 'number' &&
+        (position.rawX !== position.x || position.rawY !== position.y) && (
+          <circle cx={position.rawX} cy={position.rawY} r={0.11} className="map-raw" />
+        )}
+
       {/* Live user position */}
       {position && (
         <g

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone
 import json
 import os
 
@@ -177,6 +178,49 @@ async def compute_route(request: dict):
 
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/playback")
+async def playback_position(data: dict):
+    """Demo playback channel: broadcast a hand-authored (x, y) straight to the map.
+
+    This deliberately BYPASSES the KNN localizer and the LocationTracker. Those
+    exist to denoise real, noisy Wi-Fi localization; feeding them a clean,
+    hand-crafted path produces jerky, lagging output (the deadband/hysteresis
+    fights smooth motion). For a prerecorded "look how it walks the map" demo we
+    want the dot to follow the authored path exactly, so we emit the position as
+    a finished payload in the same shape the tracker would.
+
+    Used by scanner/simulate_reception_walk.py. The live positioning path
+    (scanner -> /api/location-data -> KNN -> tracker) is untouched.
+    """
+    try:
+        x = float(data["x"])
+        y = float(data["y"])
+    except (KeyError, TypeError, ValueError):
+        return {"status": "error", "message": "Both numeric 'x' and 'y' are required."}
+
+    payload_data = {
+        "x": round(x, 2),
+        "y": round(y, 2),
+        "raw_x": round(float(data.get("raw_x", x)), 2),
+        "raw_y": round(float(data.get("raw_y", y)), 2),
+        "knn_x": round(x, 2),
+        "knn_y": round(y, 2),
+        "confidence": round(float(data.get("confidence", 1.0)), 2),
+        "status": data.get("status", "live"),
+        "nearest_distance": data.get("nearest_distance"),
+        "filtered_rssi": None,
+        "anchor_hint": None,
+        "ambiguity": {"spread_m": 0.0, "ambiguous": False},
+        "held": False,
+        "scan_age_ms": int(data.get("scan_age_ms", 0)),
+        "carried": data.get("carried", []),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "playback": True,
+    }
+    await manager.broadcast(json.dumps(payload_data))
+    return {"status": "success", "predicted_location": payload_data}
 
 
 @app.websocket("/ws")

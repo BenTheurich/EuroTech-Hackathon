@@ -10,7 +10,7 @@ import {
   CATEGORIES,
   ROUTE_PREFERENCES,
   FLOOR_FEATURES,
-  generateVenueWalls,
+  visitorWalls,
 } from './destinations';
 import Icon from '../../components/Icon/Icon';
 import styles from './Visit.module.css';
@@ -32,9 +32,11 @@ export default function Visit() {
   const { status, targetPosition } = useLocationSocket();
   const { position } = useSmoothedLocation(targetPosition);
 
-  // A fresh, complex, fully-connected floor for this session (stable across the
-  // welcome → prefs → navigate steps; reload the page for a new layout).
-  const walls = useMemo(() => generateVenueWalls(), []);
+  // The fixed reception-floor layout (perimeter + service-core room with a
+  // doorway). It matches backend/pathfinding.default_walls and the prerecorded
+  // walk in scanner/simulate_reception_walk.py, so the live dot and the Dijkstra
+  // route both respect exactly the walls drawn here.
+  const walls = useMemo(() => visitorWalls(), []);
   const destination = DESTINATIONS.find((d) => d.id === destinationId) || null;
 
   // Best-path Dijkstra route from the live position to the chosen POI, computed

@@ -156,6 +156,16 @@ body {
   opacity: 0.92;
 }
 
+/* Raw KNN estimate before the tracker smooths it — dashed and faint so the
+   jitter (and the tracker's correction) reads clearly against the tracked dot. */
+.map-raw {
+  fill: none;
+  stroke: var(--live-accent);
+  stroke-width: 0.035;
+  stroke-dasharray: 0.08 0.06;
+  opacity: 0.7;
+}
+
 .map-anchor-label {
   fill: #fffaf2;
   font-weight: 700;
@@ -211,6 +221,101 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Live telemetry strip — surfaces the backend tracker's real state so the
+   smoothing, fingerprint-match quality and dropped-anchor handling are visible. */
+.telemetry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  white-space: normal;
+}
+
+.telemetry-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--live-muted);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.swatch-user {
+  background: var(--live-user);
+}
+
+.swatch-raw {
+  background: transparent;
+  border: 1.5px dashed var(--live-accent);
+}
+
+.metric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--live-muted);
+}
+
+.metric-value {
+  font-weight: 600;
+  color: var(--live-text);
+}
+
+.metric-warn .metric-value {
+  color: #c0563a;
+}
+
+.ts-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--live-line);
+  background: var(--live-panel);
+  font-weight: 600;
+  color: var(--live-text);
+}
+
+.ts-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--live-muted);
+}
+
+.ts-live .ts-dot {
+  background: #76875c;
+  box-shadow: 0 0 6px #76875c;
+}
+
+.ts-held .ts-dot {
+  background: #7b94c2;
+}
+
+.ts-smoothed .ts-dot {
+  background: #4a9c8c;
+}
+
+.ts-constrained .ts-dot {
+  background: #c2974a;
+}
+
+.ts-low .ts-dot {
+  background: #c0563a;
 }
 
 @media (max-width: 640px) {
