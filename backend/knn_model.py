@@ -11,6 +11,12 @@ TARGET_COLUMNS = ("x", "y")
 MAX_CANDIDATES = 12
 AMBIGUITY_DISTANCE_DELTA = 2.0
 AMBIGUITY_SPREAD_THRESHOLD_M = 2.0
+# A live anchor can read far outside anything we trained on (e.g. a phone
+# hotspot at -18 dBm when the whole training set tops out at -40). Left raw,
+# that one dimension dominates the KNN distance and drags the estimate to a
+# corner. Clamp each live reading into the training range plus this margin so a
+# wildly strong/weak anchor can't hijack the prediction.
+FEATURE_CLIP_MARGIN_DBM = 5.0
 
 
 class WifiKNNLocalizer:
@@ -48,12 +54,16 @@ class WifiKNNLocalizer:
         effective_neighbors = min(self.n_neighbors, self.training_count)
         self.targets_array = np.array(targets, dtype=float)
 
+        fit_features = np.array(features, dtype=float)
+        self.feature_min = fit_features.min(axis=0) - FEATURE_CLIP_MARGIN_DBM
+        self.feature_max = fit_features.max(axis=0) + FEATURE_CLIP_MARGIN_DBM
+
         self.model = KNeighborsRegressor(
             n_neighbors=effective_neighbors,
             weights="distance",
         )
         self.model.fit(
-            np.array(features, dtype=float),
+            fit_features,
             self.targets_array,
         )
 
@@ -67,7 +77,11 @@ class WifiKNNLocalizer:
 
     def predict_location_details(self, scan):
         feature_vector = self._scan_to_features(scan)
-        features = np.array([feature_vector], dtype=float)
+        features = np.clip(
+            np.array([feature_vector], dtype=float),
+            self.feature_min,
+            self.feature_max,
+        )
         prediction = self.model.predict(features)[0]
         candidate_count = min(MAX_CANDIDATES, self.training_count)
         distances, indices = self.model.kneighbors(features, n_neighbors=candidate_count)
