@@ -2,6 +2,30 @@ import GridFloorPlan from '../GridFloorPlan/GridFloorPlan';
 import { confidenceRingRadius } from '../../locationSmoothing';
 import styles from './VisitorMap.module.css';
 
+// A marker icon drawn INSIDE the SVG (grid units). Destination / feature icons
+// can be either an image path under /icons/ or an emoji glyph; render the former
+// as a centred <image> and the latter as <text> so both kinds show up properly
+// (previously an image path was painted verbatim as text).
+function MapIcon({ icon, size = 0.36, className }) {
+  if (typeof icon === 'string' && icon.startsWith('/icons/')) {
+    return (
+      <image
+        href={icon}
+        x={-size / 2}
+        y={-size / 2}
+        width={size}
+        height={size}
+        preserveAspectRatio="xMidYMid meet"
+      />
+    );
+  }
+  return (
+    <text y={size * 0.32} textAnchor="middle" fontSize={size * 0.78} className={className}>
+      {icon}
+    </text>
+  );
+}
+
 // The visitor-facing map. Reuses the admin's light GridFloorPlan (read-only) so
 // the two interfaces share one design, and overlays:
 //   • the visitor's live, smoothed position (from the backend KNN /ws)
@@ -29,9 +53,7 @@ export default function VisitorMap({ walls, position, destination, route, featur
         .map((f) => (
           <g key={f.id} transform={`translate(${f.x}, ${f.y})`} className={styles.feature}>
             <circle r={0.26} className={styles.featureHalo} />
-            <text y={0.1} textAnchor="middle" fontSize={0.3} className={styles.featureIcon}>
-              {f.icon}
-            </text>
+            <MapIcon icon={f.icon} size={0.34} className={styles.featureIcon} />
           </g>
         ))}
 
@@ -49,9 +71,7 @@ export default function VisitorMap({ walls, position, destination, route, featur
         <g transform={`translate(${destination.x}, ${destination.y})`}>
           <circle r={0.34} className={styles.destHalo} />
           <circle r={0.22} className={styles.destDot} />
-          <text y={0.09} textAnchor="middle" fontSize={0.26} className={styles.destIcon}>
-            {destination.icon}
-          </text>
+          <MapIcon icon={destination.icon} size={0.3} className={styles.destIcon} />
         </g>
       )}
 

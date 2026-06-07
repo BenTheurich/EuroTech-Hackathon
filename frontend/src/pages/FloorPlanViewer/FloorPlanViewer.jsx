@@ -111,7 +111,7 @@ export default function FloorPlanViewer() {
                 fixed to the corners of the KNN grid (x 0–7, y 0–5).
               </p>
               <GridFloorPlan walls={walls} onToggleEdge={toggleEdge}>
-                {trackingActive && <PositionOverlay active={trackingActive} />}
+                {trackingActive && <PositionOverlay active={trackingActive} walls={walls} />}
               </GridFloorPlan>
             </div>
           </div>

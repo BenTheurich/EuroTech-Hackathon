@@ -2,8 +2,10 @@ import { useMockPositioning } from '../../hooks/useMockPositioning';
 import styles from './PositionOverlay.module.css';
 
 // Renders inside GridFloorPlan's SVG, so all values are in KNN units (0..7, 0..5).
-export default function PositionOverlay({ active = true }) {
-  const { rawPos, filteredPos } = useMockPositioning(active);
+// `walls` is the same edge-key Set the floor plan draws, so the mock dots can be
+// constrained to walk around the walls instead of phasing through them.
+export default function PositionOverlay({ active = true, walls }) {
+  const { rawPos, filteredPos } = useMockPositioning(active, walls);
 
   return (
     <g className={styles.overlay}>
