@@ -4,14 +4,24 @@ import math
 
 MIN_CONFIDENCE = 0.15
 LOW_CONFIDENCE_THRESHOLD = 0.5
+AMBIGUITY_CONFIDENCE_SPREAD_START_M = 2.0
+AMBIGUITY_CONFIDENCE_SPREAD_FULL_M = 4.0
+MAX_AMBIGUITY_CONFIDENCE_PENALTY = 0.35
 LOCAL_CANDIDATE_RADIUS_M = 2.25
 LOCAL_PRIOR_MIN_NEAREST_DISTANCE = 4.5
+JUMP_DAMPING_DISTANCE_M = 1.0
+JUMP_DAMPING_ALPHA = 0.25
+STATIONARY_DEADBAND_M = 0.65
+SUSTAINED_MOVEMENT_UPDATES = 2
+ANCHOR_HINT_SPEED_MPS = 4.0
+ANCHOR_HINT_SLACK_M = 0.5
 
 
-def confidence_from_distance(nearest_distance, carried_count=0):
+def confidence_from_distance(nearest_distance, carried_count=0, ambiguity=None):
     confidence = 1 - ((float(nearest_distance) - 4) / 16)
     confidence = _clamp(confidence, MIN_CONFIDENCE, 1.0)
     confidence -= 0.15 * int(carried_count)
+    confidence -= _ambiguity_confidence_penalty(ambiguity)
     return _clamp(confidence, MIN_CONFIDENCE, 1.0)
 
 
@@ -21,6 +31,8 @@ class LocationTracker:
         self.slack_m = slack_m
         self.previous_position = None
         self.previous_time = None
+        self.pending_position = None
+        self.pending_count = 0
 
     def update(self, raw_prediction, scan_data, now=None):
         now = now or datetime.now(timezone.utc)
@@ -30,15 +42,24 @@ class LocationTracker:
         raw_x = float(raw_prediction["x"])
         raw_y = float(raw_prediction["y"])
         nearest_distance = float(raw_prediction["nearest_distance"])
-        confidence = confidence_from_distance(nearest_distance, len(carried))
+        ambiguity = raw_prediction.get("ambiguity")
+        confidence = confidence_from_distance(nearest_distance, len(carried), ambiguity)
         status = "live" if confidence >= LOW_CONFIDENCE_THRESHOLD else "low_confidence"
         x = raw_x
         y = raw_y
+        held = False
+        anchor_hint = raw_prediction.get("anchor_hint")
 
         if self.previous_position is not None and self.previous_time is not None:
             elapsed = max((now - self.previous_time).total_seconds(), 0.0)
-            allowed_distance = self.max_speed_mps * elapsed + self.slack_m
-            if nearest_distance >= LOCAL_PRIOR_MIN_NEAREST_DISTANCE:
+            if anchor_hint:
+                allowed_distance = ANCHOR_HINT_SPEED_MPS * elapsed + ANCHOR_HINT_SLACK_M
+                self.pending_position = None
+                self.pending_count = 0
+            else:
+                allowed_distance = self.max_speed_mps * elapsed + self.slack_m
+
+            if nearest_distance >= LOCAL_PRIOR_MIN_NEAREST_DISTANCE and not anchor_hint:
                 local_prediction = _local_candidate_prediction(
                     raw_prediction.get("candidates"),
                     self.previous_position,
@@ -48,6 +69,16 @@ class LocationTracker:
                     x, y = local_prediction
 
             previous_x, previous_y = self.previous_position
+            x, y, held = self._apply_hysteresis(
+                previous_x,
+                previous_y,
+                x,
+                y,
+                anchor_hint,
+            )
+            if held:
+                status = "held"
+
             dx = x - previous_x
             dy = y - previous_y
             distance = math.hypot(dx, dy)
@@ -59,6 +90,14 @@ class LocationTracker:
                 confidence = _clamp(confidence - 0.25, MIN_CONFIDENCE, 1.0)
                 status = "constrained"
 
+            if not anchor_hint:
+                damped_x, damped_y = _damp_large_jump(previous_x, previous_y, x, y)
+                if (damped_x, damped_y) != (x, y):
+                    x = damped_x
+                    y = damped_y
+                    if status == "live":
+                        status = "smoothed"
+
         self.previous_position = (x, y)
         self.previous_time = now
 
@@ -67,13 +106,47 @@ class LocationTracker:
             "y": round(y, 2),
             "raw_x": round(raw_x, 2),
             "raw_y": round(raw_y, 2),
+            "knn_x": round(float(raw_prediction.get("knn_x", raw_x)), 2),
+            "knn_y": round(float(raw_prediction.get("knn_y", raw_y)), 2),
             "confidence": round(confidence, 2),
             "status": status,
             "nearest_distance": round(nearest_distance, 2),
+            "filtered_rssi": raw_prediction.get("filtered_rssi"),
+            "anchor_hint": anchor_hint,
+            "ambiguity": ambiguity or {"spread_m": 0.0, "ambiguous": False},
+            "held": held,
             "scan_age_ms": _scan_age_ms(scan_time, now),
             "carried": carried,
             "timestamp": now.isoformat(),
         }
+
+    def _apply_hysteresis(self, previous_x, previous_y, x, y, anchor_hint):
+        if anchor_hint:
+            return x, y, False
+
+        candidate = (x, y)
+        movement = math.hypot(x - previous_x, y - previous_y)
+
+        if movement <= STATIONARY_DEADBAND_M:
+            self.pending_position = None
+            self.pending_count = 0
+            return previous_x, previous_y, True
+
+        if (
+            self.pending_position is not None
+            and _distance(candidate, self.pending_position) <= STATIONARY_DEADBAND_M
+        ):
+            self.pending_count += 1
+        else:
+            self.pending_position = candidate
+            self.pending_count = 1
+
+        if self.pending_count < SUSTAINED_MOVEMENT_UPDATES:
+            return previous_x, previous_y, True
+
+        self.pending_position = None
+        self.pending_count = 0
+        return x, y, False
 
 
 def _carried_list(value):
@@ -82,6 +155,10 @@ def _carried_list(value):
     if isinstance(value, str):
         return [value]
     return sorted(str(item) for item in value)
+
+
+def _distance(point, other):
+    return math.hypot(point[0] - other[0], point[1] - other[1])
 
 
 def _parse_timestamp(value):
@@ -110,6 +187,34 @@ def _scan_age_ms(scan_time, now):
 
 def _clamp(value, minimum, maximum):
     return max(minimum, min(maximum, value))
+
+
+def _ambiguity_confidence_penalty(ambiguity):
+    if not ambiguity or not ambiguity.get("ambiguous"):
+        return 0.0
+
+    try:
+        spread = float(ambiguity.get("spread_m", 0.0))
+    except (TypeError, ValueError):
+        return 0.0
+
+    if spread <= AMBIGUITY_CONFIDENCE_SPREAD_START_M:
+        return 0.0
+
+    spread_range = AMBIGUITY_CONFIDENCE_SPREAD_FULL_M - AMBIGUITY_CONFIDENCE_SPREAD_START_M
+    severity = (spread - AMBIGUITY_CONFIDENCE_SPREAD_START_M) / spread_range
+    return _clamp(severity, 0.0, 1.0) * MAX_AMBIGUITY_CONFIDENCE_PENALTY
+
+
+def _damp_large_jump(previous_x, previous_y, x, y):
+    distance = math.hypot(x - previous_x, y - previous_y)
+    if distance <= JUMP_DAMPING_DISTANCE_M:
+        return x, y
+
+    return (
+        previous_x + (x - previous_x) * JUMP_DAMPING_ALPHA,
+        previous_y + (y - previous_y) * JUMP_DAMPING_ALPHA,
+    )
 
 
 def _local_candidate_prediction(candidates, previous_position, allowed_distance):

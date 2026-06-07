@@ -1,27 +1,35 @@
 """
 Fingerprint collector for KNN training (Windows, run with `py`).
 
-Walks you through every point of the room grid. At each point you stand still,
-press Enter, and it records 5 Wi-Fi scans as 5 separate rows in
-data/fingerprints.csv (keeping the natural signal variation, which helps KNN).
+Walks you through every point of the room grid in a snake (boustrophedon)
+pattern. At each point you stand still, press Enter, and it records ONE Wi-Fi
+scan as a single row in data/fingerprints.csv. After each point it tells you
+which way to move next.
 
-Room: 7 m (x = width, left/right) by 5 m (y = length, forward/back).
-Grid:  x = 0..7 (8 values), y = 0..5 (6 values) -> 48 points.
-Order: y outer, x inner -> all of y=0 first (x=0..7), then y=1, etc.
+Grid:  x = 0..16 (17 values), y = 0..9 (10 values) -> 170 points.
+Snake order (you never backtrack across the room):
+    y=0:  x 0 -> 16   (walk right)
+    y=1:  x 16 -> 0   (step forward 1, walk left)
+    y=2:  x 0 -> 16   (step forward 1, walk right)
+    ...
 
-Anchors (phone hotspots) sit at the four corners on the z=0 plane:
-    Anchor_A (0,0)   Anchor_B (7,0)   Anchor_C (0,5)   Anchor_D (7,5)
-The laptop measures on the z = -1 plane (recorded as a constant for the record).
+Anchors (Android phone hotspots, 5 GHz) sit at the four corners on the same
+plane as the laptop:
+    Anchor_A (0,0)   Anchor_B (16,0)   Anchor_C (0,9)   Anchor_D (16,9)
+
+Before you start: set ANCHOR_SSIDS below to your four hotspot names.
 
 Usage:
-    py scanner\\collect_fingerprint.py              # guided walk over the whole grid
-    py scanner\\collect_fingerprint.py --redo        # re-collect everything from scratch
-    py scanner\\collect_fingerprint.py --x 3 --y 2   # (re)collect a single point only
+    py scanner\\collect_fingerprint.py              # guided snake walk (resumes)
+    py scanner\\collect_fingerprint.py --redo        # back up old CSV, start fresh
+    py scanner\\collect_fingerprint.py --x 3 --y 2   # (re)collect a single point
+    py scanner\\collect_fingerprint.py --scan-wait 2.5
 """
 
 import argparse
 import csv
 import os
+import shutil
 import time
 from datetime import datetime
 
@@ -29,11 +37,11 @@ import pywifi
 
 
 # ============================================================
-# CONFIGURATION  (edit the SSIDs to match your phone hotspot names)
+# CONFIGURATION  (edit the SSIDs to match your Android hotspot names)
 # ============================================================
 
 ANCHOR_SSIDS = {
-    "rssi_a": ["Anchor_A", "iPhone Azerbaijan"],
+    "rssi_a": ["Anchor_A"],
     "rssi_b": ["Anchor_B"],
     "rssi_c": ["Anchor_C"],
     "rssi_d": ["Anchor_D"],
@@ -42,24 +50,25 @@ ANCHOR_SSIDS = {
 # Where each anchor physically sits, just for on-screen guidance.
 ANCHOR_POSITIONS = {
     "rssi_a": (0, 0),
-    "rssi_b": (7, 0),
-    "rssi_c": (0, 5),
-    "rssi_d": (7, 5),
+    "rssi_b": (16, 0),
+    "rssi_c": (0, 9),
+    "rssi_d": (16, 9),
 }
 
 ANCHOR_KEYS = ["rssi_a", "rssi_b", "rssi_c", "rssi_d"]
 
-# Room grid.
-X_VALUES = list(range(0, 8))   # 0,1,2,3,4,5,6,7
-Y_VALUES = list(range(0, 6))   # 0,1,2,3,4,5
+# Room grid (number of steps -> inclusive ranges).
+X_VALUES = list(range(0, 17))   # 0,1,...,16
+Y_VALUES = list(range(0, 10))   # 0,1,...,9
 
-SAMPLES_PER_POINT = 5
-SCAN_WAIT_SECONDS = 2          # let the Wi-Fi card finish a scan
-LAPTOP_Z = -1.0                # measurement plane (constant; for the record)
+SAMPLES_PER_POINT = 1           # one scan per point, as requested
+SCAN_WAIT_SECONDS = 2.0         # let the 5 GHz scan finish before reading
+LAPTOP_Z = 0                    # laptop on the same plane as the phones
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 FINGERPRINTS_PATH = os.path.join(DATA_DIR, "fingerprints.csv")
+CLEAN_PATH = os.path.join(DATA_DIR, "fingerprints_clean.csv")
 
 CSV_FIELDS = ["timestamp", "x", "y", "z", "rssi_a", "rssi_b", "rssi_c", "rssi_d"]
 
@@ -104,9 +113,9 @@ def ssid_matches(detected_ssid, expected_names):
     return False
 
 
-def scan_wifi_networks(interface):
+def scan_wifi_networks(interface, scan_wait_seconds=SCAN_WAIT_SECONDS):
     interface.scan()
-    time.sleep(SCAN_WAIT_SECONDS)
+    time.sleep(scan_wait_seconds)
 
     results = interface.scan_results()
     networks = []
@@ -155,7 +164,6 @@ def load_existing_counts():
     with open(FINGERPRINTS_PATH, newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
 
-        # Old files may not have rssi_d; that's fine for counting.
         for row in reader:
             try:
                 key = (float(row["x"]), float(row["y"]))
@@ -166,7 +174,22 @@ def load_existing_counts():
     return counts
 
 
-def append_rows(rows):
+def backup_existing_csv():
+    """Move existing raw + clean CSVs aside so old/new grids never mix."""
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    moved = []
+
+    for path in (FINGERPRINTS_PATH, CLEAN_PATH):
+        if os.path.exists(path):
+            name = os.path.splitext(os.path.basename(path))[0]
+            backup_path = os.path.join(DATA_DIR, f"{name}_{stamp}.bak.csv")
+            shutil.move(path, backup_path)
+            moved.append(os.path.basename(backup_path))
+
+    return moved
+
+
+def append_row(row):
     ensure_data_folder_exists()
     file_exists = os.path.exists(FINGERPRINTS_PATH)
 
@@ -176,85 +199,116 @@ def append_rows(rows):
         if not file_exists:
             writer.writeheader()
 
-        for row in rows:
-            writer.writerow(row)
+        writer.writerow(row)
+
+
+def make_row(x, y, reading):
+    return {
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "x": x,
+        "y": y,
+        "z": LAPTOP_Z,
+        "rssi_a": reading["rssi_a"],
+        "rssi_b": reading["rssi_b"],
+        "rssi_c": reading["rssi_c"],
+        "rssi_d": reading["rssi_d"],
+    }
 
 
 # ============================================================
 # COLLECTION
 # ============================================================
 
-def collect_point(interface, x, y):
-    """Runs SAMPLES_PER_POINT scans at (x, y) and returns that many rows."""
-    rows = []
-    complete = 0
+def build_snake_grid():
+    """Boustrophedon order: alternate rows reverse direction on the x axis."""
+    grid = []
+    for row_index, y in enumerate(Y_VALUES):
+        xs = X_VALUES if row_index % 2 == 0 else list(reversed(X_VALUES))
+        for x in xs:
+            grid.append((x, y))
+    return grid
 
-    print(f"  Scanning {SAMPLES_PER_POINT} times. Hold still...")
 
-    for i in range(SAMPLES_PER_POINT):
-        networks = scan_wifi_networks(interface)
-        reading = find_anchor_signals(networks)
+def describe_move(current, nxt):
+    cx, cy = current
+    nx, ny = nxt
+    dx, dy = nx - cx, ny - cy
 
+    if dy > 0:
+        return (f"--> ROW DONE. Step 1 FORWARD (+Y) to x={nx}, y={ny}, "
+                f"then walk back along the X axis.")
+    if dx > 0:
+        return f"--> Move 1 step RIGHT (+X) to x={nx}, y={ny}."
+    if dx < 0:
+        return f"--> Move 1 step LEFT (-X) to x={nx}, y={ny}."
+    return f"--> Move to x={nx}, y={ny}."
+
+
+def scan_point_with_retry(interface, x, y, scan_wait):
+    """
+    One scan at (x, y). If an anchor is missing, offer a re-scan, because with
+    a single sample per point a missing anchor leaves that point with no data.
+
+    Returns a row dict, or None if the user chose to skip the point.
+    """
+    while True:
+        print("  Scanning... hold still.")
+        reading = find_anchor_signals(scan_wifi_networks(interface, scan_wait))
         missing = [k for k in ANCHOR_KEYS if reading[k] is None]
-        status = "OK" if not missing else f"MISSING {', '.join(missing)}"
+
+        print(
+            f"    A={reading['rssi_a']} B={reading['rssi_b']} "
+            f"C={reading['rssi_c']} D={reading['rssi_d']}  "
+            f"[{'OK' if not missing else 'MISSING ' + ', '.join(missing)}]"
+        )
+
         if not missing:
-            complete += 1
+            return make_row(x, y, reading)
 
-        print(
-            f"    scan {i + 1}/{SAMPLES_PER_POINT}: "
-            f"A={reading['rssi_a']} B={reading['rssi_b']} "
-            f"C={reading['rssi_c']} D={reading['rssi_d']}  [{status}]"
-        )
+        choice = input(
+            "  Missing anchor(s). Enter = re-scan,  c = keep anyway,  s = skip point: "
+        ).strip().lower()
 
-        rows.append({
-            "timestamp": datetime.now().isoformat(timespec="seconds"),
-            "x": x,
-            "y": y,
-            "z": LAPTOP_Z,
-            "rssi_a": reading["rssi_a"],
-            "rssi_b": reading["rssi_b"],
-            "rssi_c": reading["rssi_c"],
-            "rssi_d": reading["rssi_d"],
-        })
-
-    if complete < SAMPLES_PER_POINT:
-        print(
-            f"  Warning: only {complete}/{SAMPLES_PER_POINT} scans saw all 4 anchors. "
-            f"Rows with a missing anchor are dropped during KNN training."
-        )
-
-    return rows
+        if choice == "c":
+            return make_row(x, y, reading)
+        if choice == "s":
+            return None
+        # anything else -> re-scan
 
 
 def print_anchor_reference():
-    print("Anchor corners (phones, z=0):")
+    print("Anchor corners (Android hotspots, 5 GHz, same plane as laptop):")
     for key in ANCHOR_KEYS:
         ax, ay = ANCHOR_POSITIONS[key]
         names = " / ".join(ANCHOR_SSIDS[key])
         print(f"  {key.upper():7} ({ax}, {ay})   SSID: {names}")
-    print(f"Laptop measures on the z = {LAPTOP_Z} plane.\n")
+    print()
 
 
-def guided_walk(interface, redo):
-    counts = {} if redo else load_existing_counts()
+def guided_walk(interface, scan_wait, redo):
+    if redo:
+        moved = backup_existing_csv()
+        if moved:
+            print(f"Backed up previous data to: {', '.join(moved)}\n")
+        counts = {}
+    else:
+        counts = load_existing_counts()
 
-    grid = [(x, y) for y in Y_VALUES for x in X_VALUES]  # y outer, x inner
+    grid = build_snake_grid()
     total = len(grid)
 
-    print(f"Guided collection: {total} points "
+    print(f"Snake collection: {total} points "
           f"({len(X_VALUES)} x-values x {len(Y_VALUES)} y-values), "
-          f"{SAMPLES_PER_POINT} scans each.\n")
+          f"1 scan each, scan wait {scan_wait}s.\n")
     print_anchor_reference()
 
-    for index, (x, y) in enumerate(grid, start=1):
-        already = counts.get((float(x), float(y)), 0)
-
-        if not redo and already >= SAMPLES_PER_POINT:
-            print(f"[{index}/{total}] Point ({x}, {y}) already has {already} rows. Skipping.")
+    for index, (x, y) in enumerate(grid):
+        if not redo and counts.get((float(x), float(y)), 0) >= SAMPLES_PER_POINT:
+            print(f"[{index + 1}/{total}] ({x}, {y}) already collected. Skipping.")
             continue
 
-        print(f"\n[{index}/{total}] Stand at  x = {x} m,  y = {y} m.")
-        choice = input("  Press Enter to scan  (s = skip this point,  q = quit): ").strip().lower()
+        print(f"\n[{index + 1}/{total}] Stand at  x = {x},  y = {y}.")
+        choice = input("  Press Enter to scan  (s = skip,  q = quit): ").strip().lower()
 
         if choice == "q":
             print("\nStopping. Progress so far is saved.")
@@ -263,37 +317,53 @@ def guided_walk(interface, redo):
             print("  Skipped.")
             continue
 
-        rows = collect_point(interface, x, y)
-        append_rows(rows)
-        print(f"  Saved {len(rows)} rows to data/fingerprints.csv")
+        row = scan_point_with_retry(interface, x, y, scan_wait)
+        if row is None:
+            print("  Skipped (no usable scan).")
+            continue
 
-    print("\nDone. Full grid collected.")
+        append_row(row)
+        print(f"  Saved ({x}, {y}).")
+
+        is_last = index == total - 1
+        if is_last:
+            print("\nDone. Full grid collected.")
+        else:
+            print("  " + describe_move((x, y), grid[index + 1]))
+
+    print("\nDone. End of grid.")
 
 
-def single_point(interface, x, y):
+def single_point(interface, scan_wait, x, y):
     print_anchor_reference()
     print(f"Collecting a single point at x = {x}, y = {y}.")
     input("  Press Enter to scan: ")
-    rows = collect_point(interface, x, y)
-    append_rows(rows)
-    print(f"  Saved {len(rows)} rows to data/fingerprints.csv")
+    row = scan_point_with_retry(interface, x, y, scan_wait)
+    if row is None:
+        print("  Skipped (no usable scan).")
+        return
+    append_row(row)
+    print(f"  Saved ({x}, {y}) to data/fingerprints.csv")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Collect Wi-Fi fingerprints for KNN training.")
     parser.add_argument("--x", type=float, help="Collect only this x (requires --y)")
     parser.add_argument("--y", type=float, help="Collect only this y (requires --x)")
-    parser.add_argument("--redo", action="store_true", help="Re-collect the whole grid, ignoring existing rows")
+    parser.add_argument("--redo", action="store_true",
+                        help="Back up the existing CSV and re-collect the whole grid")
+    parser.add_argument("--scan-wait", type=float, default=SCAN_WAIT_SECONDS,
+                        help="Seconds to wait after triggering a Wi-Fi scan before reading results.")
     args = parser.parse_args()
 
     interface = get_wifi_interface()
 
     if args.x is not None and args.y is not None:
-        single_point(interface, args.x, args.y)
+        single_point(interface, args.scan_wait, args.x, args.y)
     elif args.x is not None or args.y is not None:
         parser.error("Use --x and --y together for a single point, or neither for the guided walk.")
     else:
-        guided_walk(interface, args.redo)
+        guided_walk(interface, args.scan_wait, args.redo)
 
 
 if __name__ == "__main__":

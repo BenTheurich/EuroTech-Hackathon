@@ -6,7 +6,8 @@ import { confidenceRingRadius } from './locationSmoothing'
 //
 // The backend predicts an (x, y) inside FLOOR's bounds. ANCHORS are the known
 // hotspot positions in that SAME space. These values match the real
-// fingerprints collected on the 8 x 6 grid.
+// fingerprints in fingerprints1400.csv: the 7 x 5 m demo room (meters),
+// x = 0..7, y = 0..5, anchors in the four corners.
 // ============================================================================
 const FLOOR = { minX: 0, maxX: 7, minY: 0, maxY: 5 }
 

@@ -6,23 +6,35 @@
 ![Tech Stack](https://img.shields.io/badge/Stack-React%20%7C%20FastAPI%20%7C%20Scikit--Learn-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-> **GPS stops at the front door. RmFindr keeps going.**
+> **GPS stops at the front door. In Hong Kong, that's where the economy begins.**
 
-RmFindr is a hackathon prototype for low-cost indoor positioning using Wi-Fi fingerprints. It turns ordinary Wi-Fi signal patterns into an indoor location system for places where GPS fails: malls, airports, hospitals, universities, train stations, clinics, and dense city buildings.
+RmFindr is an indoor spatial-intelligence layer for dense, vertical buildings. It turns the Wi-Fi signals already in the air into anonymous, real-time data on how assets and equipment move through a space — no cameras, no beacons, no new hardware, and no personal data. We track objects, not people.
 
-**Map a space once. Read the Wi-Fi signal pattern. Estimate where you are indoors.**
+Every business optimises around movement data. Outdoors, that data is everywhere. But in Hong Kong's stacked malls, interchange stations, warehouses, and cargo terminals, the way goods and equipment actually flow through a building is effectively invisible — GPS dies at the door and floor-level tracking is impossible. RmFindr makes that invisible movement measurable.
+
+**Map a space once. Read the Wi-Fi signal pattern. Turn it into location intelligence.**
 
 ## The Problem
 
-In dense cities like Hong Kong, the hardest navigation problems often happen after you arrive at the building.
+In dense cities like Hong Kong, the economy runs vertically — and the building floor is a data blind spot.
 
-Finding the right mall shop, airport gate, train platform, clinic room, lecture hall, or office suite can be confusing because GPS is unreliable indoors. Large buildings are dense, vertical, and full of signal-blocking walls, escalators, corridors, underground spaces, and overlapping floors.
+Outdoors, every vehicle and shipment can be tracked, mapped, and optimised. The moment goods, equipment, or operations move indoors, that visibility disappears. GPS is unreliable inside large buildings: they are dense, vertical, and full of signal-blocking walls, escalators, corridors, underground spaces, and overlapping floors.
 
-Existing indoor positioning solutions often require dedicated hardware such as Bluetooth beacons, UWB tags, or expensive venue infrastructure.
+Existing indoor positioning solutions often require dedicated hardware such as Bluetooth beacons, UWB tags, or expensive venue infrastructure — a cost that is hard to justify across millions of square feet of malls, warehouses, and terminals.
 
 RmFindr explores a simpler question:
 
 **What if buildings could be mapped using the Wi-Fi signals already around us?**
+
+## Why Hong Kong
+
+Hong Kong is the hardest indoor-location market in the world — and therefore the most valuable one to solve.
+
+**Life happens inside stacked structures.** Harbour City, Times Square, IFC, Langham Place, and ELEMENTS are multi-level mega-malls, often bridged directly into each other and into the MTR. GPS is useless inside them, and even working out *which floor* something is on is a hard problem. The operational and movement data that every retailer, landlord, and logistics operator optimises around simply cannot be collected with today's tools.
+
+**A logistics hub that can't see its own floors.** Hong Kong moves enormous volumes of goods through warehouses and the HKIA cargo terminals. Indoor asset tracking — where is the cage, the pallet, the forklift — is a direct operational cost, and it lives entirely indoors where GPS cannot reach.
+
+**A concentrated, sophisticated set of buyers.** The people who own these spaces are few and well-resourced: Link REIT (the largest, owning the everyday malls and markets), Sun Hung Kai Properties, Swire (Pacific Place, Cityplaza), Wharf (Harbour City, Times Square), Henderson, and Hongkong Land (Central). A focused B2B sales motion can reach the whole market through a handful of relationships.
 
 ## Our Solution
 
@@ -112,47 +124,48 @@ flowchart LR
 
 ## Vision
 
-RmFindr is a prototype for indoor navigation in dense, high-friction environments:
+RmFindr is a prototype for indoor visibility in dense, high-friction environments:
 
-- Find a doctor's office inside a hospital.
-- Navigate a mall without hunting for directory screens.
-- Locate a train platform or airport gate indoors.
-- Guide visitors through university buildings.
-- Help venues understand confusing navigation points.
-- Enable low-cost indoor positioning without special beacon hardware.
+- Track cages, pallets, and forklifts across a warehouse floor.
+- Locate handling units inside an airport cargo terminal.
+- Follow equipment and assets through a hospital or facility.
+- Give landlords anonymous, aggregated flow data across vertical malls.
+- Help operators find bottlenecks, dead zones, and inefficient routes.
+- Enable low-cost indoor tracking without special beacon hardware.
 
-In a city where life happens inside towers, stations, malls, and mixed-use buildings, indoor positioning can become just as important as outdoor maps.
+In a city where the economy runs vertically, indoor location intelligence can become just as important as outdoor maps.
 
-## Business Potential
+## Business Model
 
-RmFindr could become a lightweight indoor navigation layer for large public buildings.
+RmFindr is sold to building and logistics operators as B2B spatial intelligence, not as a consumer app. We track assets and equipment — objects, not people — which keeps the product privacy-safe by design.
 
-A mall, hospital, airport, train station, campus, or office tower could place QR codes at entrances, elevators, reception desks, and major junctions. Visitors scan the code, open the indoor map for that exact building or floor, and get guided to their destination without searching for a directory screen.
+### Asset & Operations Tracking — the recurring engine
 
-For users, the value is simple:
+Live location for things the operator controls: warehouse cages and equipment, hospital assets, cargo-terminal handling units, and carts. Because these are tagged or operator-owned devices, this product is unaffected by the phone limitations that block consumer indoor tracking.
 
-- Find the right shop, gate, platform, clinic room, lecture hall, or office suite.
-- Navigate unfamiliar buildings with less stress.
-- Use indoor wayfinding where GPS does not work.
-- Access the map from a phone, kiosk, or shared display.
+- **Buyer:** logistics operators, cargo terminals, hospitals, facilities teams.
+- **Revenue:** platform subscription **plus a recurring per-tag fee** — sticky, compounding revenue.
 
-For building operators, RmFindr creates a new layer of spatial intelligence:
+### The economics, honestly
 
-- Understand anonymous traffic flow through the building.
-- Identify confusing routes, dead zones, and navigation pain points.
-- See which entrances, corridors, and destinations receive the most movement.
-- Improve signage, directory placement, and floor layout.
-- Design future buildings around real movement patterns.
-- Support tenants, facilities teams, and visitor experience teams with better indoor insights.
+The cost that decides whether this is a software business or a services business is **map calibration and drift**: every space must be fingerprinted once, and the map degrades as access points and layouts change. We charge a one-time site-survey fee for onboarding (a cost operators already understand), and our roadmap makes recalibration *automatic* — using the continuous stream of located tags to keep the map current without a manual re-survey.
 
-A production version would be designed around opt-in sessions, short-lived identifiers, and aggregated analytics, giving buildings useful movement patterns without exposing personal identity.
+## What Works and What Doesn't
 
-RmFindr turns indoor navigation from a guessing game into a measurable experience: visitors find their destinations faster, and buildings learn how people actually move through their spaces.
+Being precise about the boundaries is what makes the rest of the claims credible.
 
-## Hackathon Scope
+**In this prototype**, we track a laptop moving around a room. The laptop reads live Wi-Fi signal strengths, the backend compares them against the calibrated fingerprint map, and the dashboard shows the laptop's estimated position update in real time. This proves the core loop end to end.
 
-RmFindr is not production-ready GPS. It is a focused 24-hour prototype showing that Wi-Fi fingerprinting can provide a practical, visual, low-cost approach to indoor positioning.
+**To turn this into asset tracking**, the laptop is replaced by a small, low-cost Wi-Fi chip (an ESP32-class tag) attached to the cage, pallet, or piece of equipment. The tag reads the same signal pattern and reports it back to the server, which returns its position — exactly the loop the prototype already runs, on hardware built for the job.
 
-The goal is to prove the core idea:
+**What works today:**
 
-**Indoor spaces are searchable, navigable, and measurable using the signals already in the air.**
+- Zone-level location (which area, which corridor, which floor) for operator-controlled or tagged devices.
+- Anonymous tracking with no cameras and no personal data — we locate objects, not people.
+
+**What doesn't work yet:**
+
+- Tracking a consumer's phone. iOS blocks Wi-Fi signal reads entirely and Android throttles them, so phones can view a map but cannot be tracked live.
+- Shelf-level (sub-metre) precision. RmFindr is a zone-level system, which is exactly what asset tracking and flow analytics need.
+
+**Roadmap to production:** denser fingerprint maps, confidence scoring, multi-floor handling, ESP32-class hardware tags, and automatic recalibration to remove manual re-surveys.

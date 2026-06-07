@@ -71,6 +71,92 @@ def test_backend_body_preserves_rssi_values_and_adds_metadata():
     }
 
 
+def test_carry_forward_expires_stale_anchor_values():
+    scanner.reset_carry_forward()
+
+    payload, carried = scanner.apply_carry_forward(
+        {
+            "timestamp": "2026-06-06T12:00:00",
+            "rssi_a": -50,
+            "rssi_b": -60,
+            "rssi_c": -70,
+            "rssi_d": -80,
+        },
+        now=100.0,
+        max_age_seconds=5.0,
+    )
+
+    assert carried == set()
+    assert payload["rssi_b"] == -60
+
+    recent_missing, carried = scanner.apply_carry_forward(
+        {
+            "timestamp": "2026-06-06T12:00:03",
+            "rssi_a": -51,
+            "rssi_b": None,
+            "rssi_c": -71,
+            "rssi_d": -81,
+        },
+        now=103.0,
+        max_age_seconds=5.0,
+    )
+
+    assert carried == {"rssi_b"}
+    assert recent_missing["rssi_b"] == -60
+
+    stale_missing, carried = scanner.apply_carry_forward(
+        {
+            "timestamp": "2026-06-06T12:00:06",
+            "rssi_a": -52,
+            "rssi_b": None,
+            "rssi_c": -72,
+            "rssi_d": -82,
+        },
+        now=106.0,
+        max_age_seconds=5.0,
+    )
+
+    assert carried == set()
+    assert stale_missing["rssi_b"] is None
+
+
+def test_compact_status_prints_backend_diagnostics(capsys):
+    scanner.print_compact_status(
+        7,
+        {
+            "rssi_a": -50,
+            "rssi_b": -60,
+            "rssi_c": -70,
+            "rssi_d": -80,
+        },
+        carried={"rssi_b"},
+        location={
+            "x": 1.2,
+            "y": 2.3,
+            "raw_x": 1.4,
+            "raw_y": 2.5,
+            "knn_x": 1.6,
+            "knn_y": 2.7,
+            "confidence": 0.75,
+            "status": "held",
+            "nearest_distance": 4.2,
+            "ambiguity": {"spread_m": 2.4, "ambiguous": True},
+            "anchor_hint": {"anchor": "D", "score": 0.82},
+            "held": True,
+        },
+        loop_seconds=0.83,
+    )
+
+    output = capsys.readouterr().out
+    assert "B=-60*" in output
+    assert "knn=(1.6,2.7)" in output
+    assert "raw=(1.4,2.5)" in output
+    assert "nearest=4.2" in output
+    assert "amb=2.4!" in output
+    assert "anchor=D:0.82" in output
+    assert "held=True" in output
+
+
 def test_profile_recommendation_uses_first_stable_fast_wait():
     results = [
         {"wait": 0.25, "anchor_hit_rate": 0.5, "p90_loop_seconds": 0.4},

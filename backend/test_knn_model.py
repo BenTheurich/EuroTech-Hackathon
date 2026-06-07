@@ -45,6 +45,21 @@ def test_predict_location_uses_csv_fingerprints(tmp_path):
     assert prediction == {"x": pytest.approx(0.0), "y": pytest.approx(0.0)}
 
 
+def test_default_neighbor_count_is_three(tmp_path):
+    fingerprints_path = tmp_path / "fingerprints.csv"
+    write_fingerprints(
+        fingerprints_path,
+        [
+            {"x": 0, "y": 0, "rssi_a": -40, "rssi_b": -80, "rssi_c": -80, "rssi_d": -80},
+            {"x": 7, "y": 0, "rssi_a": -80, "rssi_b": -40, "rssi_c": -80, "rssi_d": -80},
+        ],
+    )
+
+    localizer = WifiKNNLocalizer(fingerprint_path=fingerprints_path)
+
+    assert localizer.n_neighbors == 3
+
+
 def test_default_source_prefers_clean_then_raw_then_sample(tmp_path):
     clean_path = tmp_path / "fingerprints_clean.csv"
     raw_path = tmp_path / "fingerprints.csv"
@@ -111,6 +126,31 @@ def test_predict_location_details_includes_nearest_distance(tmp_path):
         "x": pytest.approx(0.0),
         "y": pytest.approx(0.0),
         "distance": pytest.approx(3.0),
+    }
+    assert prediction["knn_x"] == pytest.approx(0.0)
+    assert prediction["knn_y"] == pytest.approx(0.0)
+
+
+def test_prediction_marks_ambiguous_far_apart_candidates(tmp_path):
+    fingerprints_path = tmp_path / "fingerprints.csv"
+    write_fingerprints(
+        fingerprints_path,
+        [
+            {"x": 0, "y": 0, "rssi_a": -50, "rssi_b": -50, "rssi_c": -50, "rssi_d": -50},
+            {"x": 4, "y": 0, "rssi_a": -51, "rssi_b": -50, "rssi_c": -50, "rssi_d": -50},
+            {"x": 0, "y": 4, "rssi_a": -80, "rssi_b": -80, "rssi_c": -80, "rssi_d": -80},
+        ],
+    )
+
+    localizer = WifiKNNLocalizer(fingerprint_path=fingerprints_path)
+
+    prediction = localizer.predict_location_details(
+        {"rssi_a": -50, "rssi_b": -50, "rssi_c": -50, "rssi_d": -50}
+    )
+
+    assert prediction["ambiguity"] == {
+        "spread_m": pytest.approx(4.0),
+        "ambiguous": True,
     }
 
 
