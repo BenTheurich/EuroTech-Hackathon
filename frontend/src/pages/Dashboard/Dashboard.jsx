@@ -2,10 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import styles from './Dashboard.module.css';
 
 const STATS = [
-  { label: 'Buildings', value: '3', icon: '🏢', color: '#c0623c' },
-  { label: 'Access Points', value: '12', icon: '📡', color: '#76875c' },
-  { label: 'Active Users', value: '24', icon: '👤', color: '#c2974a' },
-  { label: 'Avg. Location Error', value: '1.8m', icon: '📍', color: '#a9694e' },
+  { label: 'Buildings', value: '3', icon: 'src/assets/icons/buildingsstats.jpeg', color: '#c0623c' },
+  { label: 'Access Points', value: '12', icon: 'src/assets/icons/access_points.jpeg', color: '#76875c' },
+  { label: 'Active Users', value: '24', icon: 'src/assets/icons/active_users.jpeg', color: '#c2974a' },
+  { label: 'Avg. Location Error', value: '1.8m', icon: 'src/assets/icons/avg_location_error.jpeg', color: '#a9694e' },
 ];
 
 const RECENT_ACTIVITY = [
@@ -82,16 +82,19 @@ export default function Dashboard() {
           </div>
           <div className={styles.actions}>
             <button className={styles.actionBtn} onClick={() => navigate('/buildings')}>
-              <span>🏢</span> Manage Buildings
+              <span>
+                <img src="src/assets/icons/buildingsstats.jpeg" alt="Buildings" />
+              </span>
+              Manage Buildings
             </button>
             <button className={styles.actionBtn} onClick={() => navigate('/buildings')}>
-              <span>🗺️</span> Open Floor Plans
+              <span>src/assets/icons/floor_plans.jpeg</span> Open Floor Plans
             </button>
             <button className={styles.actionBtn}>
-              <span>📡</span> Configure Access Points
+              <span>src/assets/icons/access_points.jpeg</span> Configure Access Points
             </button>
             <button className={styles.actionBtn}>
-              <span>📊</span> View Analytics
+              <span>src/assets/icons/analytics.jpeg</span> View Analytics
             </button>
           </div>
         </div>

@@ -3,12 +3,12 @@ import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
   { to: '/', icon: '⊞', label: 'Dashboard', end: true },
-  { to: '/buildings', icon: '🏢', label: 'Buildings' },
-  { to: '/visit', icon: '🚶', label: 'Visitor View' },
-  { to: '/live', icon: '📍', label: 'Live Map' },
-  { to: '/access-points', icon: '📡', label: 'Access Points' },
-  { to: '/analytics', icon: '📊', label: 'Analytics' },
-  { to: '/settings', icon: '⚙', label: 'Settings' },
+  { to: '/buildings', icon: 'src/assets/icons/buildingsstats.jpeg', label: 'Buildings' },
+  { to: '/visit', icon: 'src/assets/icons/user_profile.jpeg', label: 'Visitor View' },
+  { to: '/live', icon: 'src/assets/icons/livemap.jpeg', label: 'Live Map' },
+  { to: '/access-points', icon: 'src/assets/icons/accesspt.jpeg', label: 'Access Points' },
+  { to: '/analytics', icon: 'src/assets/icons/analytics.jpeg', label: 'Analytics' },
+  { to: '/settings', icon: 'src/assets/icons/settings.jpeg', label: 'Settings' },
 ];
 
 export default function Sidebar({ open = false, onClose }) {

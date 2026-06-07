@@ -17,15 +17,15 @@ export const VENUE = {
 // CELL CENTRE (x.5, y.5): off every wall line, so the router can always reach
 // it cleanly whatever walls the layout generator produces.
 export const DESTINATIONS = [
-  { id: 'reception', label: 'Reception', category: 'help', icon: '🛎️', x: 0.5, y: 0.5 },
-  { id: 'cafe', label: 'Café', category: 'food', icon: '☕', x: 6.5, y: 0.5 },
-  { id: 'lecture-101', label: 'Lecture Hall 101', category: 'rooms', icon: '🎓', x: 0.5, y: 4.5 },
-  { id: 'lab-a', label: 'Lab A', category: 'rooms', icon: '🔬', x: 6.5, y: 4.5 },
-  { id: 'restrooms', label: 'Restrooms', category: 'facilities', icon: '🚻', x: 3.5, y: 0.5 },
+  { id: 'reception', label: 'Reception', category: 'help', icon: 'src/assets/icons/receptionicon.jpeg', x: 0.5, y: 0.5 },
+  { id: 'cafe', label: 'Café', category: 'food', icon: 'src/assets/icons/cafe_icon.jpeg', x: 6.5, y: 0.5 },
+  { id: 'lecture-101', label: 'Lecture Hall 101', category: 'rooms', icon: 'src/assets/icons/lecture_hallicon.jpeg', x: 0.5, y: 4.5 },
+  { id: 'lab-a', label: 'Lab A', category: 'rooms', icon: 'src/assets/icons/lab_a_icon.jpeg', x: 6.5, y: 4.5 },
+  { id: 'restrooms', label: 'Restrooms', category: 'facilities', icon: 'src/assets/icons/restroomsicon.jpeg', x: 3.5, y: 0.5 },
   // The building's vertical-circulation core: stairs and lift sit side by side.
-  { id: 'elevator', label: 'Elevator', category: 'facilities', icon: '🛗', x: 2.5, y: 4.5 },
-  { id: 'stairs', label: 'Stairs', category: 'facilities', icon: '🪜', x: 4.5, y: 4.5 },
-  { id: 'exit', label: 'Main Exit', category: 'exits', icon: '🚪', x: 3.5, y: 4.5 },
+  { id: 'elevator', label: 'Elevator', category: 'facilities', icon: 'src/assets/icons/elevatoricon.jpeg', x: 2.5, y: 4.5 },
+  { id: 'stairs', label: 'Stairs', category: 'facilities', icon: 'src/assets/icons/stairs_icon.jpeg', x: 4.5, y: 4.5 },
+  { id: 'exit', label: 'Main Exit', category: 'exits', icon: 'src/assets/icons/exit.jpeg', x: 3.5, y: 4.5 },
 ];
 
 // Fixed map landmarks drawn on the floor at all times (not just when selected),
@@ -45,9 +45,9 @@ export const CATEGORIES = [
 
 // The follow-up question after "Where do you want to go?".
 export const ROUTE_PREFERENCES = [
-  { id: 'fastest', label: 'Fastest route', icon: '⚡', hint: 'Shortest path' },
-  { id: 'step-free', label: 'Step-free', icon: '♿', hint: 'Avoid stairs' },
-  { id: 'quiet', label: 'Avoid crowds', icon: '🤫', hint: 'Quieter corridors' },
+  { id: 'fastest', label: 'Fastest route', icon: 'src/assets/icons/fast.jpeg', hint: 'Shortest path' },
+  { id: 'step-free', label: 'Step-free', icon: 'src/assets/icons/behindert.jpeg', hint: 'Avoid stairs' },
+  { id: 'quiet', label: 'Avoid crowds', icon: 'src/assets/icons/avoid_crowds_pathing.jpeg', hint: 'Quieter corridors' },
 ];
 
 // A fresh, COMPLEX floor layout for each visit — rooms, corridors and doorways
